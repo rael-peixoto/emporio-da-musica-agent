@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `examples/`: five real, unedited transcripts (catalogue, store information, prices and
+  promotions, a verified return with a human handoff, scope and privacy). Every R$ amount was
+  checked automatically against the data.
+- pt-BR enforcement: a mid-conversation `system` reminder after each customer message, plus a
+  code guard that re-asks once when a reply looks English. The `idioma` scenario went from 3/5
+  to 10/10. The proxy accepts only that exact reminder as a `system` message. Decision log D21.
+- Evaluation scenario `regras_de_parcelamento`; the suite is now 22 scenarios, 22/22 on Haiku
+  5.5 (US$0.0110).
+
+### Changed
+- Prompt fixes from the example review (D22): the §3.1 installment tiers are spelled out; no
+  deadlines the manual doesn't define; never mention tools or internal instructions to
+  customers.
+- The complaint scenario now covers a two-message flow (the agent may ask for the order
+  first).
 - Scenario evaluations (`evals/`): 21 scripted conversations against the real model, with
   checks for required and forbidden values, tool calls and language. Claude Haiku 5.5:
   21/21, US$0.0097 (`evals/results/claude-haiku-5-5.md`, with transcripts). Decision log D20.

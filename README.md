@@ -33,8 +33,8 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Policy manual transcription and fidelity test | Done |
 | Tools, prompt, agent loop, command-line chat (direct mode) | Done |
 | Hosted proxy (FastAPI on Render) and proxy mode | Built and tested locally; deployment pending |
-| Scenario evaluations | Done: 21/21 on Claude Haiku 5.5 |
-| Example conversations | Planned |
+| Scenario evaluations | Done: 22/22 on Claude Haiku 5.5 |
+| Example conversations | Done (5 real transcripts) |
 | Final documentation and submission PDF | Planned |
 
 ## 1. Overview
@@ -111,6 +111,10 @@ CLI ─► agent ──┤            (your own key)
     full policy manual. It is cached.
   - A small second block carries the current date/time and whether the store is open, so the
     cache stays valid between calls.
+- **Language:** replies are always in pt-BR, enforced on two levels
+  ([decision D21](docs/decision-log.md#d21)):
+  - A mid-conversation `system` reminder follows every customer message.
+  - A code guard re-asks once if a reply still looks English.
 
 ## 4. Technical decisions
 Every decision, with the options considered and the trade-offs, is in the
@@ -214,18 +218,42 @@ customer's favour (Brazil's Consumer Protection Code, CDC art. 47).
     that order's customer.
 
 ## 8. Known limitations & future work
-_(to be completed)_
-- The open/closed check ignores holidays (no holiday list in the manual).
-- One e-mail address is shared by two customers in the data (ids 11 and 43), which weakens the
-  identity check for that address.
-- The free hosting tier sleeps when idle, so the first request can take about a minute.
-- The proxy's usage counters are in memory and reset on restart; the Anthropic workspace spend
-  limit is the persistent cap.
-- **Future:** a local model (e.g. Qwen3 8B via Ollama, which accepts the same API format) as a
-  zero-cost option; retrieval for the policies if the manual grows.
+**Known limitations**
+- **Model slips:** Haiku at low effort occasionally phrases things imperfectly. Seen in
+  testing:
+  - It used a gendered form inferred from a name ("contatada") despite the instruction to stay
+    neutral.
+  - Once, it called a ukulele a "violino" and corrected itself.
+
+  Prices, dates and rules come from tools, so the slips seen were in wording, not in facts.
+- **Language guard:** the pt-BR check counts function words. It is robust for English vs
+  Portuguese, but it isn't a general language detector.
+- **Holidays:** the open/closed check ignores holidays (the manual doesn't list them).
+- **Shared e-mail:** one e-mail address belongs to two customers in the data (ids 11 and 43),
+  which weakens the identity check for that address.
+- **Receipt date:** returns use the estimated delivery date, because no actual receipt date is
+  recorded.
+- **Proxy hosting:**
+  - The free tier sleeps when idle, so the first request can take about a minute.
+  - The proxy's usage counters are in memory and reset on restart; the Anthropic workspace
+    spend limit is the persistent cap.
+- **Single channel:** a terminal chat only. There's no WhatsApp integration, and no
+  conversation memory across sessions (by design: D11).
+
+**What I'd do with more time**
+- Connect the same agent to the WhatsApp Business API. The agent core is independent of the
+  interface.
+- Grow the evaluation suite with more paraphrases and multi-turn variations, run it
+  automatically on every change, and track pass rates over repeated runs.
+- Add a stronger identity check (e.g. a one-time code sent to the registered phone) and
+  record actual delivery dates.
+- Persist the proxy's counters (e.g. a small Redis instance) and add per-user codes.
+- Try a local model (e.g. Qwen3 8B via Ollama, which accepts the same API format) as a
+  zero-cost option.
+- Switch to retrieval for the policies if the manual grows well beyond its current 8 pages.
 
 ## 9. Testing & evaluation
-**Unit tests:** 117 tests, no model calls, run with `.venv\Scripts\python -m pytest`. Expected
+**Unit tests:** 125 tests, no model calls, run with `.venv\Scripts\python -m pytest`. Expected
 values were worked out by hand from the CSV files and the manual, never copied from the code's
 output. They cover:
 - **Data and pricing:** data loading and sellability rules; search filters (including the
@@ -239,7 +267,7 @@ output. They cover:
 - **Proxy** (with a fake upstream): access code, server-side overrides, size and rate limits,
   daily budget, hidden upstream errors, logs without message content.
 
-**Scenario evaluations** (`python -m evals.run`): 21 scripted conversations run against the
+**Scenario evaluations** (`python -m evals.run`): 22 scripted conversations run against the
 real model, with automatic checks for:
 - required values (e.g. `R$ 2.199,00`, `24/02/2026`);
 - forbidden values (another customer's data, a discount that must not be offered);
@@ -248,13 +276,14 @@ real model, with automatic checks for:
 
 | Model | Result | Cost of the full run | Report |
 |---|---|---|---|
-| Claude Haiku 5.5 (effort `low`) | **21/21 passed** | US$0.0097 | [`evals/results/claude-haiku-5-5.md`](evals/results/claude-haiku-5-5.md) (with every transcript) |
+| Claude Haiku 5.5 (effort `low`) | **22/22 passed** | US$0.0110 | [`evals/results/claude-haiku-5-5.md`](evals/results/claude-haiku-5-5.md) (with every transcript) |
 
 Scenarios:
 - **The briefing's four questions:** the catalogue up to R$ 1,000, the store address, the
   Takamine GD20 price, and returns both inside and outside the 7-day window.
 - **Catalogue situations:** out of stock, discontinued, coming soon, active promotion, expired
-  promotion, PIX not stacking, the installment cap, an empty category.
+  promotion, PIX not stacking, the installment cap, the §3.1 installment tiers, an empty
+  category.
 - **Scope:** accessories and off-topic requests.
 - **Privacy:** an order without verification, someone else's order, a prompt-injection
   attempt to list customers.
@@ -263,16 +292,37 @@ Scenarios:
 
 Every transcript was also read by hand, and the prices and dates checked against the data.
 
-**Honest note:** the first run scored 20/21. The failing check expected the word "encerrado",
-but the (correct) reply said the window "terminou em 01/11/2025". The check was fixed, not the
-agent, and the suite was re-run in full.
+**Honest notes on how the suite evolved:**
+- **First run, 20/21:** a check expected the word "encerrado", but the (correct) reply said
+  the window "terminou em 01/11/2025". The check was fixed, not the agent.
+- **Complaint scenario:** in one run, the agent asked for the order number *before*
+  registering the complaint, which is reasonable service. The scenario now covers the full
+  two-message flow.
+- **A real failure, the reply language:** Haiku sometimes answered an English question in
+  English. Fixing it took a mid-conversation reminder plus a code guard, each step measured
+  ([D21](docs/decision-log.md#d21)).
+- **Model variance:** results vary from run to run. Each fix was measured over repeated runs,
+  and every reported result comes from a full run of the final code.
 
 **Model choice:** Haiku passed every critical scenario, so under
 [decision D9](docs/decision-log.md#d9) it stays the default. Sonnet 5.5 can be compared with
 `python -m evals.run --model claude-sonnet-5-5` (about 20× the cost).
 
 ## 10. Example conversations
-_(planned: 3–5 real transcripts in `examples/`)_
+Five **real, unedited transcripts**, saved by the CLI's `--save` option with Claude Haiku 5.5.
+Each tool call can be expanded to show the exact data the agent received. Every R$ amount in
+the replies was checked automatically against values derived from the data.
+
+| File | What it shows | Non-trivial? |
+|---|---|---|
+| [`01-catalogo-violoes.md`](examples/01-catalogo-violoes.md) | Violões up to R$ 1,000 (briefing question), then PIX price and maximum installments for one of them | Live data plus computed pricing |
+| [`02-informacoes-da-loja.md`](examples/02-informacoes-da-loja.md) | Address (briefing), opening hours, payment methods and the §3.1 installment tiers, shipping to another city without inventing a freight price | Policy answers |
+| [`03-precos-pix-e-promocao.md`](examples/03-precos-pix-e-promocao.md) | Takamine GD20 price (briefing); an active promotion where the PIX discount does not stack | Data plus promotion rules |
+| [`04-devolucao-de-pedido.md`](examples/04-devolucao-de-pedido.md) | "Me arrependi..." (briefing): identity check, computed return deadline, then a human handoff with a protocol number (simulated date 20/02/2026 via `--now`) | **Yes:** verified order lookup plus policy application |
+| [`05-escopo-e-privacidade.md`](examples/05-escopo-e-privacidade.md) | Accessories declined, someone else's order not revealed, an attempt to override the instructions refused | **Yes:** privacy and safety |
+
+Examples 1–3 and 5 use the real clock (21/10/2026). Example 4 simulates 20/02/2026, so the
+order is still inside its return window.
 
 ## 11. How AI coding assistants were used
 **Tool:** Claude Code (Anthropic's AI coding assistant, Opus 5.5) in VS Code.
@@ -311,6 +361,7 @@ emporio/   the agent package
 knowledge/ politicas.md: verbatim Markdown transcription of the policy PDF (used in the prompt)
 proxy/     app.py: FastAPI proxy that holds the API key server-side (deployed on Render)
 evals/     scenarios.py, run.py: scenario evaluations against the real model; results/
+examples/  five real conversation transcripts
 tests/     unit tests (pytest, no model calls)
 render.yaml  Render Blueprint for the proxy
 data/      case data provided by Artefact (read-only, byte-identical)
