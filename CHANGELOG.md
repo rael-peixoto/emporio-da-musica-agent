@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Scenario evaluations (`evals/`): 21 scripted conversations against the real model, with
+  checks for required and forbidden values, tool calls and language. Claude Haiku 5.5:
+  21/21, US$0.0097 (`evals/results/claude-haiku-5-5.md`, with transcripts). Decision log D20.
 - Hosted proxy for reviewers (`proxy/app.py`, FastAPI), which keeps the API key server-side:
   - Exposes `POST /v1/messages`, so the agent's standard SDK client only changes its base URL.
   - Access code in `x-api-key` or `Authorization: Bearer` (Anthropic SDK 2.0 sends the

@@ -29,6 +29,7 @@ it.
 | [D17](#d17) | 2026-10-21 | Spend limit on the existing workspace (no dedicated one) | Rael |
 | [D18](#d18) | 2026-10-21 | Standing permission for stage commits | Rael |
 | [D19](#d19) | 2026-10-21 | Fixes from the first live run | Rael (found by Claude Code) |
+| [D20](#d20) | 2026-10-21 | Keep Claude Haiku 5.5 after the evaluations | Rael (rule set in D9) |
 
 ---
 
@@ -311,3 +312,18 @@ it.
   computed dates rather than the model's arithmetic. Haiku follows style instructions loosely
   at low effort; the scenario evaluations check this.
 - **Decided by:** Rael (found by Claude Code).
+
+<a id="d20"></a>
+### D20 · Keep Claude Haiku 5.5 after the evaluations
+- **Context:** D9 set the rule: keep Haiku unless it fails a critical scenario.
+- **Evidence:**
+  - 21 scripted scenarios: the briefing's four questions, catalogue edge cases, scope,
+    privacy and prompt injection, and service flows.
+  - **21/21 passed**, at US$0.0097 for the whole suite.
+  - Every transcript was read by hand, and its prices and dates checked against the data.
+  - The single failure in the first run was a check that was too narrow (the reply was
+    correct); the check was fixed and the suite re-run.
+- **Decision:** Haiku 5.5 at effort `low` stays the default, in both direct mode and the proxy.
+- **Trade-offs:** a stronger model could phrase edge cases more carefully, at about 20× the
+  cost. The suite makes switching a measured decision (`--model`).
+- **Decided by:** Rael (rule set in D9).

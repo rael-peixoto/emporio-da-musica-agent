@@ -33,7 +33,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Policy manual transcription and fidelity test | Done |
 | Tools, prompt, agent loop, command-line chat (direct mode) | Done |
 | Hosted proxy (FastAPI on Render) and proxy mode | Built and tested locally; deployment pending |
-| Scenario evaluations (Haiku 5.5 vs Sonnet 5.5) | Planned |
+| Scenario evaluations | Done: 21/21 on Claude Haiku 5.5 |
 | Example conversations | Planned |
 | Final documentation and submission PDF | Planned |
 
@@ -225,15 +225,51 @@ _(to be completed)_
   zero-cost option; retrieval for the policies if the manual grows.
 
 ## 9. Testing & evaluation
-Run `.venv\Scripts\python -m pytest`. Expected values were worked out by hand from the CSV files
-and the manual, never copied from the code's output.
+**Unit tests:** 117 tests, no model calls, run with `.venv\Scripts\python -m pytest`. Expected
+values were worked out by hand from the CSV files and the manual, never copied from the code's
+output. They cover:
+- **Data and pricing:** data loading and sellability rules; search filters (including the
+  briefing's "violões up to R$ 1,000" list); promotion, PIX and installment maths.
+- **Privacy:** order verification, including that an unknown order and a wrong e-mail give the
+  same answer; no tool output contains any customer's e-mail, phone or full name.
+- **Policies and prompt:** opening hours; return and warranty deadlines; the manual
+  transcription matches the PDF (numbers and vocabulary, in both directions).
+- **Agent loop** (with a fake model client): the tool loop and the forced answer on the last
+  round; input, turn and budget limits; refusals, truncation and API errors.
+- **Proxy** (with a fake upstream): access code, server-side overrides, size and rate limits,
+  daily budget, hidden upstream errors, logs without message content.
 
-_(in progress)_
-- **Unit tests (no model calls):** data loading, sellability, search filters, promotion and PIX
-  maths, installments, order verification, no personal data in any tool output, store hours,
-  fidelity of the manual transcription, and proxy limits.
-- **Scenario evaluations:** about 15 scripted conversations run against the real model, with
-  automatic checks and cost reported per model.
+**Scenario evaluations** (`python -m evals.run`): 21 scripted conversations run against the
+real model, with automatic checks for:
+- required values (e.g. `R$ 2.199,00`, `24/02/2026`);
+- forbidden values (another customer's data, a discount that must not be offered);
+- required and forbidden tool calls;
+- the reply language.
+
+| Model | Result | Cost of the full run | Report |
+|---|---|---|---|
+| Claude Haiku 5.5 (effort `low`) | **21/21 passed** | US$0.0097 | [`evals/results/claude-haiku-5-5.md`](evals/results/claude-haiku-5-5.md) (with every transcript) |
+
+Scenarios:
+- **The briefing's four questions:** the catalogue up to R$ 1,000, the store address, the
+  Takamine GD20 price, and returns both inside and outside the 7-day window.
+- **Catalogue situations:** out of stock, discontinued, coming soon, active promotion, expired
+  promotion, PIX not stacking, the installment cap, an empty category.
+- **Scope:** accessories and off-topic requests.
+- **Privacy:** an order without verification, someone else's order, a prompt-injection
+  attempt to list customers.
+- **Service flows:** a complaint handed to a human, a Sunday message (after hours), and an
+  English message answered in pt-BR.
+
+Every transcript was also read by hand, and the prices and dates checked against the data.
+
+**Honest note:** the first run scored 20/21. The failing check expected the word "encerrado",
+but the (correct) reply said the window "terminou em 01/11/2025". The check was fixed, not the
+agent, and the suite was re-run in full.
+
+**Model choice:** Haiku passed every critical scenario, so under
+[decision D9](docs/decision-log.md#d9) it stays the default. Sonnet 5.5 can be compared with
+`python -m evals.run --model claude-sonnet-5-5` (about 20× the cost).
 
 ## 10. Example conversations
 _(planned: 3–5 real transcripts in `examples/`)_
@@ -274,6 +310,7 @@ emporio/   the agent package
            config.py   settings and usage limits
 knowledge/ politicas.md: verbatim Markdown transcription of the policy PDF (used in the prompt)
 proxy/     app.py: FastAPI proxy that holds the API key server-side (deployed on Render)
+evals/     scenarios.py, run.py: scenario evaluations against the real model; results/
 tests/     unit tests (pytest, no model calls)
 render.yaml  Render Blueprint for the proxy
 data/      case data provided by Artefact (read-only, byte-identical)
