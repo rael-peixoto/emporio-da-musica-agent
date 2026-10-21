@@ -1,0 +1,2 @@
+# Keep the provided case data byte-identical to the originals (no line-ending conversion)
+data/** -text
