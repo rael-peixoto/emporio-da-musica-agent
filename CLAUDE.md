@@ -111,7 +111,7 @@ Each issue below needs an explicit handling decision, documented in the README:
   expired against the real clock.
 - `bruno.martins@jmail.com` belongs to customers 11 and 43.
 
-## Decisions (approved plan: `docs/implementation-plan.md`)
+## Decisions (approved plans: `docs/implementation-plan*.md`; history: `docs/decision-log.md`)
 - **Architecture:** Anthropic SDK + a manual tool-use loop (no framework, no beta tool runner).
   Deterministic Python tools are the *only* path to the CSV data and do all arithmetic.
 - **Model:** `claude-haiku-5-5` by default (`MODEL` env var). Switch to `claude-sonnet-5-5`
@@ -121,14 +121,37 @@ Each issue below needs an explicit handling decision, documented in the README:
 - **Interface:** CLI. **History:** in memory for one session; transcripts only via `--save`.
 - **"Today":** real clock in America/Campo_Grande, overridable with `--now` for demos/tests.
 - **Order access:** order number + e-mail or phone of that order's customer.
-- The handling of each data/policy issue listed above is in the plan, §2.
+- The handling of each data/policy issue listed above is in the plan, §2, and in README §7.
+- **Two transports, one agent:** the agent, tools and data always run locally.
+  - Default: model calls go through `proxy/` (FastAPI on Render, holds the key server-side).
+  - Direct mode: the reviewer's own `ANTHROPIC_API_KEY`.
+  - Mode: direct if the key is set, else proxy; `LLM_BACKEND` forces one. In proxy mode the
+    client sends the access code as its `api_key`, so a reviewer's real key never reaches the
+    proxy.
+- **The proxy overrides** model, effort, `max_tokens`, the static system prompt and the tool
+  list with its own copies, and enforces the access code, size limits, a global rate limit
+  and a daily US$ budget. No per-IP limits (spoofable `X-Forwarded-For` on Render).
+  Never log message content.
+
+## API budget
+US$5 prepaid credits, auto-reload off; the proxy's key sits in a separate Anthropic workspace
+with its own spend limit. After **every** run that calls the model, report its estimated cost
+(from `usage`). Use Haiku 5.5 for development; ask before running Sonnet/Opus. Warn the user
+before credits run low.
+
+## Documentation duties
+- When a decision is made, append it to `docs/decision-log.md`: context, options, decision,
+  trade-offs, decided by.
+- Keep the README progress table and sections in sync with the code at every stage. Mark
+  unbuilt parts _(planned)_; never describe them as done.
 
 ## Deliverables checklist
 Submission goes through two channels (the briefing and the recruiter e-mail differ, so we do
 both): the public GitHub repo link, and a PDF uploaded to the recruiter's form.
 - [ ] Public GitHub repo with incremental history.
 - [ ] Submission PDF (≤ 100 MB) generated from the README and documentation (assumption: README
-      plus the example conversations appended), named
+      + decision log + example conversations, plus a private "Reviewer access" page with the
+      proxy access code taken from a build argument). The PDF is never committed. Named
       `Rael Marchant Peixoto - AI Engineer – Full-Stack para Aplicações com IA Generativa.pdf`.
 - [ ] README: setup & run (env, provider, commands); technical justifications (framework, LLM,
       retrieval, prompts); assumptions; known limitations and what we'd do with more time;
@@ -160,7 +183,8 @@ Copy `.env.example` to `.env` for the API key. Never read, print or commit `.env
 
 ## Repo layout
 ```
-emporio/     cli.py · config.py (+ catalog.py · tools.py · prompt.py · agent.py, later stages)
+emporio/     cli.py · config.py (+ catalog.py · tools.py · prompt.py · agent.py · llm.py, later)
+proxy/       FastAPI proxy for Render (later stage) · render.yaml at the repo root
 data/        provided case data (read-only)
-docs/        implementation-plan.md (approved plan, process documentation)
+docs/        implementation plans (approved) · decision-log.md (dated decision timeline)
 ```
