@@ -362,6 +362,7 @@ knowledge/ politicas.md: verbatim Markdown transcription of the policy PDF (used
 proxy/     app.py: FastAPI proxy that holds the API key server-side (deployed on Render)
 evals/     scenarios.py, run.py: scenario evaluations against the real model; results/
 examples/  five real conversation transcripts
+scripts/   build_pdf.py: builds the submission PDF (README + decision log + examples) into dist/
 tests/     unit tests (pytest, no model calls)
 render.yaml  Render Blueprint for the proxy
 data/      case data provided by Artefact (read-only, byte-identical)

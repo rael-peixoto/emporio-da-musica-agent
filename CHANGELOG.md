@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `scripts/build_pdf.py`: builds the submission PDF (README + decision log + examples) with
+  headless Chrome; repo-relative links become GitHub links. An optional private
+  reviewer-access page reads the code from `.env`. Output goes to `dist/` (gitignored).
 - `examples/`: five real, unedited transcripts (catalogue, store information, prices and
   promotions, a verified return with a human handoff, scope and privacy). Every R$ amount was
   checked automatically against the data.

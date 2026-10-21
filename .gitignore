@@ -12,5 +12,8 @@ __pycache__/
 # Runtime output (human-handoff log may contain customer messages)
 logs/
 
+# Built submission PDF (may contain the private reviewer access code)
+dist/
+
 # Recruiter correspondence must never be published
 *.eml
