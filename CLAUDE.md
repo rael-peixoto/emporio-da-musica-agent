@@ -32,8 +32,10 @@ Workflow: **understand → research → plan → execute → test → document.*
   README "Assumptions" section.
 
 ## Git
-- **Never commit, push, create the GitHub repo or publish anything without explicit permission
-  each time.** Suggest checkpoints and commit messages; the user decides.
+- **Standing permission (granted 2026-10-21):** commit and push at each stage checkpoint, only
+  when the tests pass and after a secret scan of the staged diff; report what went in
+  afterwards. Anything else outward-facing (new repos, deployments, publishing, history
+  rewrites) still needs explicit permission each time.
 - Evaluators want real incremental history: small meaningful commits, never force-push or
   squash everything into one commit.
 - Never commit secrets (`.env`, API keys), the recruiter e-mail (`*.eml`) or the candidate's
@@ -100,8 +102,9 @@ Each issue below needs an explicit handling decision, documented in the README:
   field.
 - Missing from the manual/data: holiday list, partner stores, "venda final" flag. The manual
   claims 300+ instruments, but the data has 65 and none in categories 6, 7, 8.
-- Products 135–140, 142, 144: name and description disagree on brand/specs (e.g. 142 is
-  "Korg" but described as an 88-key Roland, while its spec says 61 keys).
+- Products 135, 136, 137, 139, 140, 142, 144: name and description disagree on brand/specs
+  (e.g. 142 is "Korg" but described as an 88-key Roland, while its spec says 61 keys). 138
+  ("StingRay") and 141 ("Stage Custom") name models of their own brand, so they are consistent.
 - Product statuses: 130 is `coming_soon` with stock 2 but was already delivered in order 3;
   136 is `discontinued` with stock 13; 96 is `active` with stock 0.
 - Orders 3 and 20: totals ≠ sum of items. Orders 9, 16, 18 break the §3.1 installment
@@ -134,8 +137,8 @@ Each issue below needs an explicit handling decision, documented in the README:
   Never log message content.
 
 ## API budget
-US$5 prepaid credits, auto-reload off; the proxy's key sits in a separate Anthropic workspace
-with its own spend limit. After **every** run that calls the model, report its estimated cost
+US$5 prepaid credits, auto-reload off. The key's workspace has a US$3 monthly spend limit,
+shared by development and the proxy. After **every** run that calls the model, report its estimated cost
 (from `usage`). Use Haiku 5.5 for development; ask before running Sonnet/Opus. Warn the user
 before credits run low.
 

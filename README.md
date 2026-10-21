@@ -29,7 +29,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 |---|---|
 | Project guidelines (`CLAUDE.md`), case data, scaffold | Done |
 | Documentation skeleton and decision log | Done |
-| Data layer and unit tests | Planned |
+| Data layer and unit tests | Done |
 | Policy manual transcription and fidelity test | Planned |
 | Tools, prompt, agent loop, command-line chat (direct mode) | Planned |
 | Hosted proxy (FastAPI on Render) and proxy mode | Planned |
@@ -103,7 +103,7 @@ _(planned; see [decision D15](docs/decision-log.md#d15))_
 
 Layered protection for a US$5 prepaid API budget:
 - A prepaid balance with no auto-reload.
-- A dedicated Anthropic workspace for the proxy key, with a monthly spend limit.
+- A US$3 monthly spend limit on the Anthropic workspace that holds the key.
 - Keys only in environment variables, never in git; GitHub push protection is enabled.
 - The proxy requires an access code.
 - The proxy enforces its own model, length cap, system prompt and tool list, so it only works
@@ -124,8 +124,8 @@ customer's favour (Brazil's Consumer Protection Code, CDC art. 47).
    - The Giannini GF-3D (id 96) is "temporarily unavailable".
    - The Ibanez Bass 2X (id 136) is discontinued even though it shows stock.
    - The Kala barítono (id 130) is "coming soon".
-2. **Contradictory product descriptions:** for products 135–140, 142 and 144, the free-text
-   description contradicts the product name. Those descriptions are withheld; the name, price,
+2. **Contradictory product descriptions:** for products 135, 136, 137, 139, 140, 142 and 144,
+   the free-text description names another brand or contradicts the specs. Those descriptions are withheld; the name, price,
    stock and specs are authoritative.
 3. **Promotions:** only promotions marked active count. Promotions don't stack, and the 5% PIX
    discount never applies on top of a promotional price.
@@ -168,7 +168,10 @@ _(to be completed)_
   zero-cost option; retrieval for the policies if the manual grows.
 
 ## 9. Testing & evaluation
-_(planned)_
+Run `.venv\Scripts\python -m pytest`. Expected values were worked out by hand from the CSV files
+and the manual, never copied from the code's output.
+
+_(in progress)_
 - **Unit tests (no model calls):** data loading, sellability, search filters, promotion and PIX
   maths, installments, order verification, no personal data in any tool output, store hours,
   fidelity of the manual transcription, and proxy limits.
@@ -203,7 +206,9 @@ budget, the credentials and the deployments.
 
 ## 12. Repository layout
 ```
-emporio/   the agent package (command line and configuration so far)
+emporio/   the agent package: cli.py, config.py, catalog.py (data and queries), rules.py
+           (pricing, installments, opening hours)
+tests/     unit tests (pytest, no model calls)
 data/      case data provided by Artefact (read-only, byte-identical)
 docs/      implementation plans and decision log
 CLAUDE.md  rules followed by the AI coding assistant

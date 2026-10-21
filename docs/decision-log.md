@@ -26,6 +26,8 @@ it.
 | [D14](#d14) | 2026-10-21 | Hosted proxy for reviewers, plus direct mode | Rael |
 | [D15](#d15) | 2026-10-21 | Layered cost and abuse safeguards | Rael (designed with Claude Code) |
 | [D16](#d16) | 2026-10-21 | Pinned dependency versions | Rael (proposed by Claude Code) |
+| [D17](#d17) | 2026-10-21 | Spend limit on the existing workspace (no dedicated one) | Rael |
+| [D18](#d18) | 2026-10-21 | Standing permission for stage commits | Rael |
 
 ---
 
@@ -237,7 +239,7 @@ it.
 ### D15 · Layered cost and abuse safeguards
 - **Decision:**
   - A prepaid balance with no auto-reload.
-  - A dedicated Anthropic workspace for the proxy key, with a monthly spend limit.
+  - A monthly spend limit on the Anthropic workspace that holds the key (see D17).
   - Secret hygiene: keys stay out of git, and GitHub push protection (which detects Anthropic
     keys) is enabled.
   - A proxy access code, compared in constant time.
@@ -261,3 +263,30 @@ it.
 - **Trade-offs:** no automatic security updates, in exchange for reviewers running exactly
   what was tested.
 - **Decided by:** Rael (proposed by Claude Code).
+
+<a id="d17"></a>
+### D17 · Spend limit on the existing workspace (no dedicated one)
+- **Context:** the plan proposed a dedicated Anthropic workspace for the proxy key, based on
+  documentation saying the default workspace can't have limits. The Console did accept a
+  US$3 monthly limit on the workspace that already held the key, so that research note was
+  wrong.
+- **Options:** keep one key and use it locally and on the proxy · create a second key in the
+  same workspace · create a dedicated workspace.
+- **Decision:** a US$3 monthly limit on the existing workspace. The same key may be used on
+  the proxy; a second key in the same workspace remains optional, and would only add the
+  ability to revoke the proxy independently.
+- **Trade-offs:** development and reviewer usage share the same US$3 cap, so development spend
+  is kept low and reported after every run.
+- **Decided by:** Rael.
+
+<a id="d18"></a>
+### D18 · Standing permission for stage commits
+- **Context:** with the deadline close, waiting for approval on every commit was the main
+  source of delay.
+- **Decision:** Claude Code may commit and push at each stage checkpoint, but only when the
+  tests pass and after scanning the staged changes for secrets. It reports what went in
+  afterwards. New repositories, deployments, publishing and history rewrites still need
+  explicit approval each time.
+- **Trade-offs:** less review before each commit, offset by small single-stage commits, a
+  report after each one, and the ability to revert.
+- **Decided by:** Rael.
