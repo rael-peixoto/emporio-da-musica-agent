@@ -30,7 +30,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Project guidelines (`CLAUDE.md`), case data, scaffold | Done |
 | Documentation skeleton and decision log | Done |
 | Data layer and unit tests | Done |
-| Policy manual transcription and fidelity test | Planned |
+| Policy manual transcription and fidelity test | Done |
 | Tools, prompt, agent loop, command-line chat (direct mode) | Planned |
 | Hosted proxy (FastAPI on Render) and proxy mode | Planned |
 | Scenario evaluations (Haiku 5.5 vs Sonnet 5.5) | Planned |
@@ -208,6 +208,7 @@ budget, the credentials and the deployments.
 ```
 emporio/   the agent package: cli.py, config.py, catalog.py (data and queries), rules.py
            (pricing, installments, opening hours)
+knowledge/ politicas.md: verbatim Markdown transcription of the policy PDF (used in the prompt)
 tests/     unit tests (pytest, no model calls)
 data/      case data provided by Artefact (read-only, byte-identical)
 docs/      implementation plans and decision log

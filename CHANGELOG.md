@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `knowledge/politicas.md`: verbatim Markdown transcription of the policy manual (tables kept
+  as tables), and `tests/test_policy_fidelity.py`, which requires the same numbers and the same
+  vocabulary as the PDF in both directions, so a typo, an invented rule or a dropped passage
+  fails the build.
 - Data layer: `emporio/catalog.py` loads the CSVs into typed records, keeps the best active
   promotion per product, withholds contradictory descriptions, filters searches with
   promotional prices and typo-tolerant terms, and verifies orders by e-mail or phone.
