@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `--mode proxy|direct` CLI flag, which works the same in cmd and PowerShell (unlike setting
+  environment variables).
+- README: plain-language explanation of the automated checks; a note that proxy users get
+  prompt changes only after a Render redeploy; "Things to try" rows for contacts and a
+  product that isn't found.
+- Prompt: when a product isn't found, suggest available alternatives in the same category.
 - Proxy deployed on Render at `https://emporio-proxy.onrender.com`, now the default
   `PROXY_URL`. Verified end to end:
   - a real chat through Render;
@@ -26,6 +32,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   5.5 (US$0.0110).
 
 ### Changed
+- WhatsApp number (D25): the agent gives WhatsApp (67) 3321-4500 (§7) and phone
+  (67) 3341-4444; the conflict is flagged in the README.
+- The session cost line is shown only with `--debug`.
 - Language (D23): pt-BR by default; an English question may be answered in English. Removed
   the mid-conversation reminder and the English-detection guard. The proxy again rejects any
   client `system` message.

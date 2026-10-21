@@ -48,8 +48,11 @@ class Settings:
     access_code: str | None
 
 
-def load_settings(env_file: Path | None = PROJECT_ROOT / ".env") -> Settings:
-    """Read settings from the environment, after loading an optional .env file."""
+def load_settings(env_file: Path | None = PROJECT_ROOT / ".env", backend: str | None = None) -> Settings:
+    """Read settings from the environment, after loading an optional .env file.
+
+    `backend` (the CLI's --mode) takes precedence over LLM_BACKEND and the automatic choice.
+    """
     if env_file:
         load_dotenv(env_file)
     model = os.getenv("MODEL", "").strip() or DEFAULT_MODEL
@@ -58,7 +61,8 @@ def load_settings(env_file: Path | None = PROJECT_ROOT / ".env") -> Settings:
         raise ValueError(f"EFFORT must be one of {', '.join(EFFORT_LEVELS)}; got {effort!r}")
 
     has_key = bool(os.getenv("ANTHROPIC_API_KEY", "").strip())
-    backend = os.getenv("LLM_BACKEND", "").strip().lower() or ("direct" if has_key else "proxy")
+    backend = (backend or os.getenv("LLM_BACKEND", "").strip().lower()
+               or ("direct" if has_key else "proxy"))
     if backend not in BACKENDS:
         raise ValueError(f"LLM_BACKEND must be one of {', '.join(BACKENDS)}; got {backend!r}")
     proxy_url = (os.getenv("PROXY_URL", "").strip() or DEFAULT_PROXY_URL).rstrip("/")

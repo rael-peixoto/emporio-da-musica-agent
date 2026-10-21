@@ -29,6 +29,13 @@ def test_no_key_selects_proxy_mode(monkeypatch):
     assert (s.backend, s.proxy_url, s.access_code) == ("proxy", "https://proxy.test", "code-123")
 
 
+def test_cli_mode_flag_overrides_env_and_auto_choice(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_BACKEND", "direct")
+    monkeypatch.setenv("EMPORIO_ACCESS_CODE", "code-123")
+    assert load_settings(env_file=None, backend="proxy").backend == "proxy"
+
+
 def test_proxy_mode_without_access_code_explains_both_options(monkeypatch):
     with pytest.raises(ValueError, match="EMPORIO_ACCESS_CODE.*ANTHROPIC_API_KEY"):
         settings(monkeypatch, PROXY_URL="https://proxy.test")

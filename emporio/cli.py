@@ -13,7 +13,7 @@ import anthropic
 from emporio import llm
 from emporio.agent import Agent, Turn
 from emporio.catalog import Catalog
-from emporio.config import Settings, load_settings, resolve_now
+from emporio.config import BACKENDS, Settings, load_settings, resolve_now
 
 EXIT_WORDS = {"sair", "exit", "quit", "tchau"}
 MODE_LABELS = {"direct": "direto (sua chave da API)", "proxy": "proxy (servidor da Empório)"}
@@ -41,9 +41,15 @@ def build_parser() -> argparse.ArgumentParser:
         "(default: the real clock)",
     )
     parser.add_argument(
+        "--mode",
+        choices=BACKENDS,
+        help="proxy: use the hosted proxy (needs EMPORIO_ACCESS_CODE); direct: use your own "
+        "ANTHROPIC_API_KEY (default: direct if a key is set, otherwise proxy)",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
-        help="print every tool call and its result",
+        help="print every tool call, its result, tokens and estimated cost",
     )
     parser.add_argument(
         "--save",
@@ -111,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     args = build_parser().parse_args(argv)
     try:
-        settings = load_settings()
+        settings = load_settings(backend=args.mode)
     except ValueError as exc:
         print(f"Configuration error: {exc}", file=sys.stderr)
         return 2
@@ -153,5 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         if transcript:
             transcript.add(turn)
 
-    print(f"\nAté logo! Custo estimado desta sessão: US$ {agent.total_cost_usd:.4f}")
+    print("\nAté logo!")
+    if args.debug:
+        print(f"Custo estimado desta sessão: US$ {agent.total_cost_usd:.4f}")
     return 0

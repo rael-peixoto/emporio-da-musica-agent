@@ -93,7 +93,8 @@ order_items 22 · customers 50. File names contain spaces and accents: use UTF-8
 `pathlib`, and test on Windows.
 
 Each issue below needs an explicit handling decision, documented in the README:
-- Phone `(67) 3341-4444` (cover, §1.2) vs WhatsApp `(67) 3321-4500` (§7).
+- Phone `(67) 3341-4444` (cover, §1.2) vs WhatsApp `(67) 3321-4500` (§7). Decided (D25):
+  WhatsApp 3321-4500, phone 3341-4444.
 - E-mail `contato@emporiodamusica.com.br` (cover) vs `contato@empóriodamusica.com.br` (§1.2).
 - Installments: the table says min R$ 100/parcel; §3.1 says ≤3x no minimum "except below
   R$ 50" (ambiguous), 4–6x R$ 80, 7–12x R$ 100.
@@ -130,6 +131,9 @@ Each issue below needs an explicit handling decision, documented in the README:
 - **Two transports, one agent:** the agent, tools and data always run locally.
   - Default: model calls go through `proxy/` (FastAPI on Render, holds the key server-side),
     deployed at `https://emporio-proxy.onrender.com` (free tier; cold start about 50 s).
+  - **The proxy uses its own deployed prompt and tools.** After changing `prompt.py` or
+    `tools.py`, the user must redeploy on Render (no auto-deploy on push); test prompt
+    changes in direct mode (`--mode direct`).
   - Direct mode: the reviewer's own `ANTHROPIC_API_KEY`.
   - Mode: direct if the key is set, else proxy; `LLM_BACKEND` forces one. In proxy mode the
     client sends the access code as its `api_key`, so a reviewer's real key never reaches the

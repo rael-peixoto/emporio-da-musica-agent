@@ -34,6 +34,7 @@ it.
 | [D22](#d22) | 2026-10-21 | Prompt fixes from reviewing the example transcripts | Rael (found by Claude Code) |
 | [D23](#d23) | 2026-10-21 | pt-BR by default; English answers allowed (supersedes D21) | Rael |
 | [D24](#d24) | 2026-10-21 | No Sonnet comparison run; Haiku is enough at this scale | Rael |
+| [D25](#d25) | 2026-10-21 | WhatsApp number from §7 (revises D12, item 5) | Rael |
 
 ---
 
@@ -403,4 +404,18 @@ it.
   store's scale. Revisit Sonnet if the business grows or the evaluations start failing;
   `python -m evals.run --model claude-sonnet-5-5` makes that a measured switch.
 - **Trade-offs:** no measured Sonnet baseline in the README.
+- **Decided by:** Rael.
+
+<a id="d25"></a>
+### D25 · WhatsApp number from §7 (revises D12, item 5)
+- **Context:** the manual gives two WhatsApp numbers. The cover and the §1.2 table show
+  "Telefone / WhatsApp (67) 3341-4444"; §7, the section about WhatsApp service, calls
+  (67) 3321-4500 "o principal meio de atendimento remoto". The first plan gave customers
+  3341-4444 for both, because it appears twice. Manual testing showed the agent quoting that
+  number for WhatsApp.
+- **Decision:** WhatsApp **(67) 3321-4500**, phone **(67) 3341-4444**. The section that
+  describes the WhatsApp channel in detail is the more specific source. The README flags the
+  conflict for the store to confirm.
+- **Trade-offs:** one of the two sources is still wrong; the agent can't know which, so the
+  conflict is documented rather than hidden.
 - **Decided by:** Rael.
