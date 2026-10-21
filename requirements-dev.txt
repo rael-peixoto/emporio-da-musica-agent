@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==9.1.1
+# Policy-transcription fidelity test (reads the original PDF)
+pypdf==6.21.2
+# Builds the submission PDF from the README and example conversations
+markdown==3.11.2

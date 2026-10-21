@@ -111,10 +111,17 @@ Each issue below needs an explicit handling decision, documented in the README:
   expired against the real clock.
 - `bruno.martins@jmail.com` belongs to customers 11 and 43.
 
-## Open decisions (resolve in the plan, then record in the README)
-Agent architecture · LLM & provider · interface · history persistence · reference "today" for
-date rules · identity check for orders · handling of each issue above · Python version
-(3.14.3 installed; `uv` not installed) · test tooling · repo layout.
+## Decisions (approved plan: `docs/implementation-plan.md`)
+- **Architecture:** Anthropic SDK + a manual tool-use loop (no framework, no beta tool runner).
+  Deterministic Python tools are the *only* path to the CSV data and do all arithmetic.
+- **Model:** `claude-haiku-5-5` by default (`MODEL` env var). Switch to `claude-sonnet-5-5`
+  only if the scenario evals show Haiku failing critical scenarios. No local models for now.
+- **Policies:** the full manual (transcribed to `knowledge/politicas.md`) goes in the cached
+  system prompt; no RAG.
+- **Interface:** CLI. **History:** in memory for one session; transcripts only via `--save`.
+- **"Today":** real clock in America/Campo_Grande, overridable with `--now` for demos/tests.
+- **Order access:** order number + e-mail or phone of that order's customer.
+- The handling of each data/policy issue listed above is in the plan, §2.
 
 ## Deliverables checklist
 Submission goes through two channels (the briefing and the recruiter e-mail differ, so we do
@@ -142,7 +149,18 @@ both): the public GitHub repo link, and a PDF uploaded to the recruiter's form.
   the CSV/PDF.
 
 ## Commands
-_TBD: filled in once the implementation plan is approved (setup, run, test)._
+Windows (PowerShell); on macOS/Linux use `.venv/bin/python`. No `uv` on this machine.
+```
+py -3.14 -m venv .venv
+.venv\Scripts\python -m pip install -r requirements-dev.txt
+.venv\Scripts\python -m emporio --help        # chat: [--now ISO] [--debug] [--save PATH]
+.venv\Scripts\python -m pytest                # unit tests, no LLM calls
+```
+Copy `.env.example` to `.env` for the API key. Never read, print or commit `.env`.
 
 ## Repo layout
-_TBD._
+```
+emporio/     cli.py · config.py (+ catalog.py · tools.py · prompt.py · agent.py, later stages)
+data/        provided case data (read-only)
+docs/        implementation-plan.md (approved plan, process documentation)
+```

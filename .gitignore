@@ -1,11 +1,16 @@
 # Secrets
 .env
+.env.*
+!.env.example
 
 # Python
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Runtime output (human-handoff log may contain customer messages)
+logs/
 
 # Recruiter correspondence must never be published
 *.eml
