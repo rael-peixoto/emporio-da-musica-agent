@@ -35,6 +35,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Hosted proxy (FastAPI on Render) and proxy mode | Done: deployed at `https://emporio-proxy.onrender.com` |
 | Scenario evaluations | Done: 22/22 on Claude Haiku 5.5 |
 | Example conversations | Done (5 real transcripts) |
+| Local web chat (WhatsApp-style, plus a behind-the-scenes console) | Done |
 | Final documentation and submission PDF | Planned |
 
 ## 1. Overview
@@ -47,6 +48,11 @@ What the agent does:
   returns, shipping, warranty and privacy.
 - **Scope:** it politely declines anything outside the store's scope (accessories, off-topic
   requests) and hands complaints and unclear cases to a human.
+
+Two ways to talk to it, both running the same agent:
+- a **terminal chat**;
+- a **local WhatsApp-style web chat**, with a second tab that shows what happens behind the
+  scenes ([screenshots below](#web-chat-whatsapp-style)).
 
 ## 2. Quick start
 You need Python 3.11+ (developed on 3.14). Two ways to run it, both using the same agent code:
@@ -80,6 +86,24 @@ Edit `.env` and fill in **either** `EMPORIO_ACCESS_CODE` (option A) **or** `ANTH
 - `--now` simulates another date/time in Campo Grande. The order data ends in March 2026, so
   this is how to see an order still inside its return window.
 - `--save` writes the conversation, including every tool call, to Markdown.
+
+### Web chat (WhatsApp-style)
+```
+.venv\Scripts\python -m emporio.web               # opens http://127.0.0.1:8000 in your browser
+.venv\Scripts\python -m emporio.web --mode proxy --now 2026-02-20T10:00   # same options as the CLI
+```
+The page has two tabs:
+- **💬 Chat:** what a customer would see on WhatsApp. Type a question or tap a suggestion
+  chip.
+- **🖥️ Console (bastidores):** the same conversation behind the scenes: every tool call, the
+  exact data the agent received, tokens, cache use and cost.
+
+The server only listens on your own computer (`127.0.0.1`). Press Ctrl+C in the terminal to
+stop it.
+
+![WhatsApp-style chat tab](docs/img/web-chat.png)
+
+![Behind-the-scenes console tab](docs/img/web-console.png)
 
 **Cost:** about US$0.001–0.002 per customer message on Claude Haiku 5.5. In a measured run,
 the 8,246-token cached prompt was written once and then read from cache on every later call.
@@ -153,7 +177,7 @@ Every decision, with the options considered and the trade-offs, is in the
 | Policy retrieval | Full manual in a cached system prompt | 8 pages: no retrieval misses, least code |
 | Model | Claude Haiku 5.5 (Sonnet 5.5 only if evals require it) | Cheapest current Claude model; quality measured, not assumed |
 | Framework | Plain Anthropic SDK, hand-written tool loop | Nothing hidden; no beta dependency |
-| Interface | Command line (`--debug`, `--save`, `--now`) | Fastest to build; example conversations are real transcripts |
+| Interface | Command line, plus a local WhatsApp-style web chat with a behind-the-scenes console | CLI: fastest, and makes real transcripts. Web: lets testers feel the customer experience and see how it works, with no new public surface |
 | History | In memory, one session | Data minimisation under Brazil's data-protection law (LGPD) |
 | Reviewer access | Hosted FastAPI proxy (default) or your own key | Reviewers don't need a key; the author's key never leaves the server |
 
@@ -175,6 +199,13 @@ The project runs on a US$5 prepaid API budget, so protection is layered. Decisio
 
 **Not done:** per-IP rate limiting. Render's `X-Forwarded-For` header can be spoofed by the
 client, so it would give false assurance.
+
+**Local web chat:**
+- It listens on `127.0.0.1` only.
+- Every API call needs a random token created at launch and embedded in the page. Other
+  websites open in the same browser can't read it, so they can't make your local server spend
+  credits.
+- At most 20 conversations are held in memory, and the agent's usual limits apply.
 
 **Known gap:** the proxy's counters live in memory and reset when the free instance restarts.
 The Anthropic workspace limit is the persistent backstop.
@@ -286,12 +317,25 @@ customer's favour (Brazil's Consumer Protection Code, CDC art. 47).
   - The free tier sleeps when idle, so the first request can take about a minute.
   - The proxy's usage counters are in memory and reset on restart; the Anthropic workspace
     spend limit is the persistent cap.
-- **Single channel:** a terminal chat only. There's no WhatsApp integration, and no
-  conversation memory across sessions (by design: D11).
+- **No real WhatsApp:** the web chat only *looks* like WhatsApp. There's no live WhatsApp
+  integration ([D27](docs/decision-log.md#d27)), and no conversation memory across sessions
+  (by design: D11).
 
 **What I'd do with more time**
-- Connect the same agent to the WhatsApp Business API. The agent core is independent of the
-  interface.
+- **Connect the agent to real WhatsApp.** The agent core doesn't depend on the interface, so
+  this is a new entry point, not a rewrite:
+  1. Register a number on the **WhatsApp Business Cloud API** (Meta). For a quick pilot,
+     Twilio's WhatsApp sandbox also works.
+  2. Add `POST /webhook` to the existing Render service. It verifies Meta's request signature
+     and maps each customer's phone number to a conversation (an `Agent` object, as in the web
+     chat).
+  3. Run the same agent server-side and send the reply back through the API. A reply is free
+     within 24 hours of the customer's last message; messages the business initiates need
+     pre-approved templates.
+  4. Treat phone numbers as personal data under LGPD: keep conversations only as long as the
+     24-hour window lasts, and log no message content (as the proxy already does).
+  5. **Needs:** a Meta Business account, a verified phone number, and webhook verification.
+     Estimated at 2–4 hours of work, plus Meta's approval time.
 - Grow the evaluation suite with more paraphrases and multi-turn variations, run it
   automatically on every change, and track pass rates over repeated runs.
 - Add a stronger identity check (e.g. a one-time code sent to the registered phone) and
@@ -421,7 +465,9 @@ budget, the credentials and the deployments.
 ## 12. Repository layout
 ```
 emporio/   the agent package
-           cli.py      terminal chat (--now, --debug, --save)
+           cli.py      terminal chat (--now, --mode, --debug, --save)
+           web.py      local web chat server; static/index.html is the page (chat + console)
+           messages.py friendly error messages shared by the CLI and the web chat
            agent.py    tool-use loop and cost guards
            tools.py    tools the model can call
            prompt.py   system prompt (static and cached, plus current context)

@@ -49,6 +49,7 @@ pre { background: #f4f4f4; padding: 8px; white-space: pre-wrap; word-break: brea
 pre code { background: none; }
 a { color: #0645ad; text-decoration: none; }
 details summary { font-size: 9pt; color: #555; }
+img { max-width: 100%; border: 1px solid #ccc; margin: 6px 0; }
 .part { page-break-before: always; }
 .access { border: 2px solid #c00; padding: 12px; background: #fff6f6; }
 """
@@ -90,7 +91,11 @@ def to_html(md_path: Path) -> str:
         anchor = "#" + target.split("#", 1)[1] if "#" in target else ""
         return f"[{label}]({REPO_URL}/blob/main/{resolved}{anchor})"
 
-    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", absolute, text)
+    def local_image(match: re.Match) -> str:  # images must render inside the PDF, not link out
+        return f"![{match.group(1)}]({(md_path.parent / match.group(2)).resolve().as_uri()})"
+
+    text = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", local_image, text)
+    text = re.sub(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)", absolute, text)
     return markdown.markdown(text, extensions=["tables", "fenced_code", "toc", "md_in_html"])
 
 

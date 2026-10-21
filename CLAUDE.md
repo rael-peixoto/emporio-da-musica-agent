@@ -188,6 +188,7 @@ py -3.14 -m venv .venv
 .venv\Scripts\python -m pip install -r requirements-dev.txt
 .venv\Scripts\python -m emporio --help        # chat: [--now ISO] [--debug] [--save PATH]
 .venv\Scripts\python -m pytest                # unit tests, no LLM calls
+.venv\Scripts\python -m emporio.web           # local WhatsApp-style web chat (+ console tab)
 ```
 Scripted live runs: write the customer lines (ending with `sair`) to a UTF-8 file and pipe it
 in: `.venv/Scripts/python.exe -m emporio --debug < input.txt` (Bash). `--debug` prints the
@@ -196,7 +197,8 @@ Copy `.env.example` to `.env` for the API key. Never read, print or commit `.env
 
 ## Repo layout
 ```
-emporio/     cli.py · agent.py · tools.py · prompt.py · llm.py · catalog.py · rules.py · config.py
+emporio/     cli.py · web.py (+ static/index.html) · messages.py · agent.py · tools.py · prompt.py
+             · llm.py · catalog.py · rules.py · config.py
 knowledge/   politicas.md (verbatim transcription of the policy PDF; fidelity-tested)
 tests/       pytest, no LLM calls (fake client for the agent loop)
 proxy/       FastAPI proxy for Render (later stage) · render.yaml at the repo root

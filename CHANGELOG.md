@@ -6,6 +6,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Local web chat (`python -m emporio.web`, D26):
+  - A WhatsApp-style chat tab with suggestion chips.
+  - A "behind the scenes" console tab with tool calls, data, tokens and cost.
+  - It uses the same agent in direct or proxy mode, runs on `127.0.0.1` only, and protects its
+    API with a per-launch page token.
+  - README screenshots in `docs/img/`.
+- README future work: a concrete design for a real WhatsApp integration (D27).
 - `--mode proxy|direct` CLI flag, which works the same in cmd and PowerShell (unlike setting
   environment variables).
 - README: plain-language explanation of the automated checks; a note that proxy users get

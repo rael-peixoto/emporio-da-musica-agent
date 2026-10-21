@@ -35,6 +35,8 @@ it.
 | [D23](#d23) | 2026-10-21 | pt-BR by default; English answers allowed (supersedes D21) | Rael |
 | [D24](#d24) | 2026-10-21 | No Sonnet comparison run; Haiku is enough at this scale | Rael |
 | [D25](#d25) | 2026-10-21 | WhatsApp number from §7 (revises D12, item 5) | Rael |
+| [D26](#d26) | 2026-10-21 | Local WhatsApp-style web chat with a console tab (extends D7) | Rael |
+| [D27](#d27) | 2026-10-21 | Real WhatsApp integration documented, not built | Rael |
 
 ---
 
@@ -418,4 +420,35 @@ it.
   conflict for the store to confirm.
 - **Trade-offs:** one of the two sources is still wrong; the agent can't know which, so the
   conflict is documented rather than hidden.
+- **Decided by:** Rael.
+
+<a id="d26"></a>
+### D26 · Local WhatsApp-style web chat with a console tab (extends D7)
+- **Context:** manual testing showed a terminal doesn't give the feel of talking to a store on
+  WhatsApp. Testers, possibly non-technical, should also be able to see *how* the agent
+  reaches its answers.
+- **Options:**
+  - A hosted page (zero install, but a new public surface to secure).
+  - A local page.
+  - A web terminal running the real CLI in the browser.
+- **Decision:** a local page (`python -m emporio.web`) with two tabs:
+  - a WhatsApp-style chat;
+  - a "behind the scenes" console with tool calls, data, tokens and cost.
+
+  The page runs the same `Agent` in direct or proxy mode, so the agent code didn't change. It
+  is one self-contained HTML file with no external libraries. It listens on `127.0.0.1` only,
+  and a per-launch token protects its API from other websites.
+- **Trade-offs:** testers still clone and install (the same steps as the CLI), but there's no
+  new internet-facing surface to secure or pay for.
+- **Decided by:** Rael.
+
+<a id="d27"></a>
+### D27 · Real WhatsApp integration documented, not built
+- **Context:** connecting to real WhatsApp would be a bonus. The briefing accepts a CLI,
+  notebook, API or simple UI.
+- **Decision:** document a concrete design in the README's future work, and don't build it
+  now. The design: a Cloud API webhook on the Render service, the same agent run server-side,
+  and phone numbers treated as personal data.
+- **Trade-offs:** no live WhatsApp demo. In exchange, no dependency on Meta or Twilio account
+  approval before the deadline, and no need to register reviewers' phone numbers.
 - **Decided by:** Rael.
