@@ -14,12 +14,14 @@ from emporio import llm
 from emporio.agent import Agent, Turn
 from emporio.catalog import Catalog
 from emporio.config import BACKENDS, Settings, load_settings, resolve_now
+from emporio.messages import api_error_message
 
 EXIT_WORDS = {"sair", "exit", "quit", "tchau"}
 MODE_LABELS = {"direct": "direto (sua chave da API)", "proxy": "proxy (servidor da Empório)"}
 
 
-def _iso_datetime(value: str) -> datetime:
+def iso_datetime(value: str) -> datetime:
+    """argparse type for --now (shared with the web UI)."""
     try:
         return resolve_now(value)
     except ValueError as exc:
@@ -35,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--now",
-        type=_iso_datetime,
+        type=iso_datetime,
         metavar="ISO_DATETIME",
         help="simulate the current date/time in Campo Grande, e.g. 2026-03-25T10:00 "
         "(default: the real clock)",
@@ -58,18 +60,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="write the conversation, including tool calls, to a Markdown file",
     )
     return parser
-
-
-def api_error_message(exc: anthropic.APIError) -> str:
-    if isinstance(exc, anthropic.AuthenticationError):
-        return "Acesso negado: confira EMPORIO_ACCESS_CODE (modo proxy) ou ANTHROPIC_API_KEY (modo direto)."
-    if isinstance(exc, anthropic.RateLimitError):
-        return "Muitas mensagens em pouco tempo. Aguarde um minuto e tente de novo."
-    if isinstance(exc, anthropic.PermissionDeniedError):
-        return "O limite de uso da demonstração foi atingido. Tente mais tarde ou use sua própria chave da API."
-    if isinstance(exc, anthropic.APIConnectionError):
-        return "Não consegui conectar ao servidor. Verifique sua internet e tente de novo."
-    return f"Erro ao falar com o modelo ({type(exc).__name__}). Tente de novo."
 
 
 class Transcript:

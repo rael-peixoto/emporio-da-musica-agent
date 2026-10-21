@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empório da Música · demo</title>
+<style>
+  :root {
+    --wa-dark: #075e54; --wa-green: #25d366; --wa-out: #dcf8c6; --wa-in: #ffffff;
+    --wa-bg: #e5ddd5; --wa-bar: #f0f2f5; --text: #111b21; --muted: #667781; --tick: #53bdeb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Helvetica, Arial, sans-serif; background: #d1d7db; color: var(--text); }
+  .app { max-width: 920px; height: 100vh; margin: 0 auto; display: flex; flex-direction: column; background: #fff;
+         box-shadow: 0 0 12px rgba(0,0,0,.15); }
+  .topbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #fff; border-bottom: 1px solid #e0e0e0;
+            font-size: 13px; flex-wrap: wrap; }
+  .tab { border: 0; background: none; padding: 8px 12px; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; color: var(--muted); }
+  .tab.active { color: var(--wa-dark); border-bottom-color: var(--wa-green); font-weight: 600; }
+  .badge { background: #eef6f4; color: var(--wa-dark); border-radius: 10px; padding: 2px 8px; font-size: 12px; }
+  .spacer { flex: 1; }
+  .reset { border: 1px solid var(--wa-dark); color: var(--wa-dark); background: #fff; border-radius: 14px; padding: 4px 12px; cursor: pointer; }
+  .panel { flex: 1; display: none; flex-direction: column; min-height: 0; }
+  .panel.active { display: flex; }
+
+  /* Chat (WhatsApp look) */
+  .wa-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--wa-dark); color: #fff; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 22px; }
+  .wa-name { font-weight: 600; }
+  .wa-status { font-size: 12px; opacity: .85; }
+  .messages { flex: 1; overflow-y: auto; padding: 16px 6%; background-color: var(--wa-bg);
+              background-image: radial-gradient(rgba(0,0,0,.035) 1px, transparent 1px); background-size: 18px 18px; }
+  .row { display: flex; margin: 4px 0; }
+  .row.out { justify-content: flex-end; }
+  .bubble { max-width: 78%; padding: 6px 9px 4px; border-radius: 8px; box-shadow: 0 1px .5px rgba(0,0,0,.13);
+            font-size: 14.2px; line-height: 1.4; word-wrap: break-word; }
+  .in .bubble { background: var(--wa-in); border-top-left-radius: 0; }
+  .out .bubble { background: var(--wa-out); border-top-right-radius: 0; }
+  .bubble ul { margin: 4px 0; padding-left: 20px; }
+  .meta { float: right; margin: 6px 0 -2px 10px; font-size: 11px; color: var(--muted); }
+  .ticks { color: var(--tick); margin-left: 3px; }
+  .notice { margin: 8px auto; text-align: center; font-size: 12.5px; background: #fff8c4; border-radius: 7px;
+            padding: 5px 10px; max-width: 85%; color: #54656f; box-shadow: 0 1px .5px rgba(0,0,0,.13); }
+  .typing span { display: inline-block; width: 7px; height: 7px; margin: 0 1px; border-radius: 50%; background: #9aa5ab;
+                 animation: blink 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; } .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px 0; background: var(--wa-bar); }
+  .chip { flex: none; border: 1px solid #c8d1d6; background: #fff; border-radius: 16px; padding: 5px 11px; font-size: 13px;
+          cursor: pointer; color: var(--wa-dark); }
+  .chip:hover { background: #eef6f4; }
+  .hint { padding: 4px 12px 0; font-size: 11.5px; color: var(--muted); background: var(--wa-bar); }
+  .composer { display: flex; gap: 8px; padding: 8px 10px 10px; background: var(--wa-bar); }
+  .composer input { flex: 1; border: 0; border-radius: 20px; padding: 10px 14px; font-size: 15px; outline: none; }
+  .send { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--wa-dark); color: #fff; font-size: 18px; cursor: pointer; }
+  .send:disabled { background: #9aa5ab; cursor: default; }
+
+  /* Console (behind the scenes) */
+  .console { flex: 1; overflow-y: auto; background: #1e1e1e; color: #d4d4d4; padding: 14px 16px;
+             font-family: Consolas, "Courier New", monospace; font-size: 12.5px; line-height: 1.5; }
+  .console .head { color: #9cdcfe; border-bottom: 1px solid #333; padding-bottom: 6px; margin-bottom: 10px; }
+  .console .turn { border-left: 2px solid #3a3d41; padding-left: 10px; margin-bottom: 16px; }
+  .c-user { color: #ce9178; } .c-tool { color: #dcdcaa; } .c-reply { color: #b5cea8; white-space: pre-wrap; }
+  .c-usage { color: #808080; } .c-err { color: #f48771; }
+  .console details { margin: 2px 0 4px 16px; } .console summary { cursor: pointer; color: #808080; }
+  .console pre { margin: 4px 0; white-space: pre-wrap; word-break: break-word; color: #d4d4d4; }
+  .empty { color: #808080; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="tab active" data-tab="chat">💬 Chat</button>
+    <button class="tab" data-tab="console">🖥️ Console (bastidores)</button>
+    <span class="spacer"></span>
+    <span class="badge" id="mode-badge">modo: …</span>
+    <span class="badge" id="date-badge"></span>
+    <button class="reset" id="reset">Nova conversa</button>
+  </div>
+
+  <section class="panel active" id="panel-chat">
+    <div class="wa-header">
+      <div class="avatar">🎸</div>
+      <div><div class="wa-name">Empório da Música</div><div class="wa-status" id="status">online</div></div>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="chips" id="chips"></div>
+    <div class="hint">Pedidos de teste: nº 8 → anacarol.ferreira@coldmail.com · nº 7 → leticia.rocha@jmail.com
+      (use <code>--now 2026-02-20T10:00</code> para estar no prazo de devolução)</div>
+    <form class="composer" id="composer">
+      <input id="input" placeholder="Digite uma mensagem" autocomplete="off" maxlength="1500">
+      <button class="send" id="send" title="Enviar">➤</button>
+    </form>
+  </section>
+
+  <section class="panel" id="panel-console">
+    <div class="console" id="console"><div class="empty">No messages yet. Everything the agent does behind the scenes
+      (tool calls, the data it received, tokens and cost) appears here.</div></div>
+  </section>
+</div>
+
+<script>
+const TOKEN = "__PAGE_TOKEN__";
+const SUGGESTIONS = [
+  ["Violões até R$ 1000", "Quais violões vocês têm até R$ 1000?"],
+  ["Takamine GD20", "Quanto custa o Takamine GD20? E no PIX?"],
+  ["Promoção Taylor 110e", "O Taylor 110e está em promoção? No PIX tem mais desconto?"],
+  ["Giannini GF-3D", "Vocês têm o Giannini GF-3D Dreadnought Sunburst?"],
+  ["Status do pedido 8", "Qual o status do pedido 8?"],
+  ["Devolver pedido 7", "Me arrependi da compra do pedido 7, posso devolver?"],
+  ["WhatsApp da loja", "Qual o WhatsApp de vocês?"],
+  ["Horários e entrega", "Qual o horário de vocês? Entregam em Dourados?"],
+  ["Cordas e palhetas", "Vocês vendem cordas e palhetas?"],
+  ["In English", "Hi! What is the cheapest ukulele you have?"],
+];
+const $ = (id) => document.getElementById(id);
+let sessionId = null, sessionCost = 0, busy = false;
+
+async function api(path, body) {
+  const options = { headers: { "X-Page-Token": TOKEN } };
+  if (body !== undefined) {
+    options.method = "POST";
+    options.headers["Content-Type"] = "application/json";
+    options.body = JSON.stringify(body);
+  }
+  const response = await fetch(path, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || data.detail || `HTTP ${response.status}`);
+  return data;
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Minimal Markdown: text is escaped first, so the model's output can never inject HTML
+function renderMarkdown(text) {
+  const lines = escapeHtml(text).split("\n");
+  let html = "", inList = false;
+  for (const line of lines) {
+    const item = line.match(/^\s*[-*]\s+(.*)$/);
+    if (item) {
+      if (!inList) { html += "<ul>"; inList = true; }
+      html += `<li>${item[1]}</li>`;
+      continue;
+    }
+    if (inList) { html += "</ul>"; inList = false; }
+    html += line + "<br>";
+  }
+  if (inList) html += "</ul>";
+  return html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(<br>)+$/, "");
+}
+
+function clock() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function addBubble(side, html, time = clock()) {
+  const row = document.createElement("div");
+  row.className = `row ${side}`;
+  const ticks = side === "out" ? '<span class="ticks">✓✓</span>' : "";
+  row.innerHTML = `<div class="bubble">${html}<span class="meta">${time}${ticks}</span></div>`;
+  $("messages").appendChild(row);
+  $("messages").scrollTop = $("messages").scrollHeight;
+  return row;
+}
+
+function addNotice(text) {
+  const div = document.createElement("div");
+  div.className = "notice";
+  div.textContent = text;
+  $("messages").appendChild(div);
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+
+function renderConsoleHead() {
+  const head = $("console").querySelector(".head") || document.createElement("div");
+  head.className = "head";
+  const badge = $("date-badge").dataset;
+  head.textContent = `session ${sessionId ? sessionId.slice(0, 8) : "-"} · mode ${$("mode-badge").dataset.mode || "-"}` +
+    ` · ${badge.simulated === "true" ? "simulated now" : "now"} ${badge.now || "-"}` +
+    ` · session cost US$ ${sessionCost.toFixed(5)}`;
+  $("console").prepend(head);
+}
+
+function addConsoleTurn(turn) {
+  $("console").querySelector(".empty")?.remove();
+  const block = document.createElement("div");
+  block.className = "turn";
+  let html = `<div class="c-user">&gt; customer: ${escapeHtml(turn.user)}</div>`;
+  for (const call of turn.tool_calls || []) {
+    let output = call.output;
+    try { output = JSON.stringify(JSON.parse(call.output), null, 2); } catch (e) { /* keep raw */ }
+    html += `<div class="c-tool">⚙ tool ${escapeHtml(call.name)}(${escapeHtml(JSON.stringify(call.input))})` +
+      `${call.is_error ? ' <span class="c-err">[error]</span>' : ""}</div>` +
+      `<details><summary>result (${output.length} chars)</summary><pre>${escapeHtml(output)}</pre></details>`;
+  }
+  if (!(turn.tool_calls || []).length) html += `<div class="c-usage">(no tool calls: answered from the prompt and the policy manual)</div>`;
+  html += `<div class="c-reply">← reply: ${escapeHtml(turn.reply || turn.error || "")}</div>`;
+  if (turn.tokens) {
+    const t = turn.tokens;
+    html += `<div class="c-usage">usage: ${turn.api_calls} API call(s) · input ${t.input} · output ${t.output} · ` +
+      `cache read ${t.cache_read} · cache write ${t.cache_write} · US$ ${turn.cost_usd.toFixed(5)} · ${turn.model}</div>`;
+  }
+  block.innerHTML = html;
+  $("console").appendChild(block);
+  renderConsoleHead();
+}
+
+function setBadges(data) {
+  $("mode-badge").textContent = `modo: ${data.mode === "proxy" ? "proxy (servidor)" : "direto (sua chave)"}`;
+  $("mode-badge").dataset.mode = data.mode;
+  $("date-badge").textContent = `${data.simulated ? "data simulada" : "agora"}: ${data.now}`;
+  $("date-badge").dataset.now = data.now;
+  $("date-badge").dataset.simulated = String(data.simulated);
+}
+
+function setBusy(value) {
+  busy = value;
+  $("send").disabled = value;
+  $("status").textContent = value ? "digitando…" : "online";
+}
+
+async function send(text) {
+  text = text.trim();
+  if (!text || busy) return;
+  addBubble("out", escapeHtml(text));
+  $("input").value = "";
+  setBusy(true);
+  const typing = addBubble("in", '<span class="typing"><span></span><span></span><span></span></span>', "");
+  try {
+    const turn = await api("/api/chat", { session_id: sessionId, message: text });
+    typing.remove();
+    addBubble("in", renderMarkdown(turn.reply));
+    sessionCost = turn.session_cost_usd;
+    addConsoleTurn(turn);
+  } catch (error) {
+    typing.remove();
+    addNotice(error.message);
+    addConsoleTurn({ user: text, error: error.message, tool_calls: [] });
+  } finally {
+    setBusy(false);
+    $("input").focus();
+  }
+}
+
+async function startSession() {
+  $("messages").innerHTML = "";
+  $("console").innerHTML = '<div class="empty">No messages yet.</div>';
+  sessionCost = 0;
+  const data = await api("/api/session", {});
+  sessionId = data.session_id;
+  setBadges(data);
+  renderConsoleHead();
+  history.replaceState(null, "", `?session=${sessionId}`);
+  addNotice("Conversa de demonstração com o assistente virtual da Empório da Música. Escreva ou toque em uma sugestão abaixo.");
+}
+
+async function resumeSession(id) {
+  try {
+    const data = await api(`/api/history?session_id=${encodeURIComponent(id)}`);
+    sessionId = id;
+    setBadges(data);
+    sessionCost = data.session_cost_usd;
+    $("console").innerHTML = "";
+    if (!data.turns.length) $("console").innerHTML = '<div class="empty">No messages yet.</div>';
+    for (const turn of data.turns) {
+      addBubble("out", escapeHtml(turn.user), "");
+      addBubble("in", renderMarkdown(turn.reply), "");
+      addConsoleTurn(turn);
+    }
+    renderConsoleHead();
+  } catch (error) {
+    await startSession();  // the server restarted or the session expired
+  }
+}
+
+function showTab(name) {
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === `panel-${name}`));
+}
+
+for (const [label, text] of SUGGESTIONS) {
+  const chip = document.createElement("button");
+  chip.className = "chip";
+  chip.type = "button";
+  chip.textContent = label;
+  chip.onclick = () => send(text);
+  $("chips").appendChild(chip);
+}
+document.querySelectorAll(".tab").forEach((t) => t.onclick = () => showTab(t.dataset.tab));
+$("composer").onsubmit = (event) => { event.preventDefault(); send($("input").value); };
+$("reset").onclick = () => startSession();
+
+const params = new URLSearchParams(location.search);
+if (params.get("tab") === "console") showTab("console");
+(params.get("session") ? resumeSession(params.get("session")) : startSession())
+  .catch((error) => addNotice(`Erro ao iniciar: ${error.message}`));
+</script>
+</body>
+</html>

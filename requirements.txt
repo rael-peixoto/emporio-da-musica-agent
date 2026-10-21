@@ -2,3 +2,6 @@ anthropic==2.0.0
 python-dotenv==1.2.4
 # Windows ships no IANA time-zone database; zoneinfo needs this for America/Campo_Grande
 tzdata==2026.5
+# Local web chat (python -m emporio.web) and the hosted proxy
+fastapi==0.158.2
+uvicorn==0.54.0
