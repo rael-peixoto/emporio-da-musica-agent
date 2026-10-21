@@ -31,7 +31,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Documentation skeleton and decision log | Done |
 | Data layer and unit tests | Done |
 | Policy manual transcription and fidelity test | Done |
-| Tools, prompt, agent loop, command-line chat (direct mode) | Planned |
+| Tools, prompt, agent loop, command-line chat (direct mode) | Done |
 | Hosted proxy (FastAPI on Render) and proxy mode | Planned |
 | Scenario evaluations (Haiku 5.5 vs Sonnet 5.5) | Planned |
 | Example conversations | Planned |
@@ -49,40 +49,62 @@ What the agent does:
   requests) and hands complaints and unclear cases to a human.
 
 ## 2. Quick start
-_(planned: completed in the proxy and agent stages)_
-
-Two ways to run it. Both use the same agent code:
+You need Python 3.11+ (developed on 3.14). Two ways to run it, both using the same agent code:
 - **A. Hosted proxy (default, no API key needed):** you run the agent locally, and its model
   calls go through the author's proxy. You need the access code sent with the submission. It
-  is not published here, to protect the API budget.
-- **B. Your own Anthropic API key (direct mode):** put `ANTHROPIC_API_KEY` in `.env`, and the
-  agent calls Anthropic directly.
+  is not published here, to protect the API budget. _(planned: proxy stage)_
+- **B. Your own Anthropic API key (direct mode):** the agent calls Anthropic directly.
 
-Setup available today:
 ```
 git clone https://github.com/rael-peixoto/emporio-da-musica-agent.git
 cd emporio-da-musica-agent
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt     # Windows
 # .venv/bin/python -m pip install -r requirements.txt       # macOS / Linux
-.venv\Scripts\python -m emporio --help
+copy .env.example .env                                        # macOS / Linux: cp
 ```
+Edit `.env` and fill in `ANTHROPIC_API_KEY` (option B), then start the chat:
+```
+.venv\Scripts\python -m emporio                   # chat in the terminal; type "sair" to quit
+.venv\Scripts\python -m emporio --debug           # also show tool calls, tokens and cost
+.venv\Scripts\python -m emporio --now 2026-02-20T10:00 --save conversa.md
+```
+- `--now` simulates another date/time in Campo Grande. The order data ends in March 2026, so
+  this is how to see an order still inside its return window.
+- `--save` writes the conversation, including every tool call, to Markdown.
+
+**Cost:** about US$0.001–0.002 per customer message on Claude Haiku 5.5. In a measured run,
+the 8,246-token cached prompt was written once and then read from cache on every later call.
 
 ## 3. How it works
-_(planned design; see [`docs/implementation-plan.md`](docs/implementation-plan.md))_
+_(direct mode is implemented; the proxy route is planned)_
 ```
                 ┌─ direct:  Anthropic SDK ──────────────────────────► api.anthropic.com
 CLI ─► agent ──┤            (your own key)
  (local tools, └─ proxy:   Anthropic SDK, base_url=Render URL ─► FastAPI proxy ─► api.anthropic.com
   local data)              api_key = access code                (key kept server-side)
 ```
-- **Agent loop:** Claude decides whether to answer directly or call a tool. Tools run locally
-  in Python over the CSV files and return exact, pre-computed values.
-- **Tools:** product search, product details (price, active promotion, PIX price, maximum
-  interest-free installments), category list, verified order lookup, and human handoff.
-- **Prompt:** in pt-BR. It holds the persona, the ground rules, the interpretation notes and
-  the full policy manual, and is cached. The current date/time and whether the store is open
-  are added in a separate block after the cached part.
+- **Agent loop** (`emporio/agent.py`): Claude decides whether to answer directly or call a
+  tool. Tools run locally in Python over the CSV files and return exact, pre-formatted values
+  (e.g. `"R$ 2.199,00"`), so the model never does arithmetic.
+  - At most 5 tool rounds per message; the last round forbids tools, so the model has to
+    answer.
+- **Tools** (`emporio/tools.py`):
+
+  | Tool | What it does |
+  |---|---|
+  | `buscar_produtos` | Product search by term, category, price range, string type or electric/acoustic; prices include active promotions |
+  | `detalhes_produto` | Specs, availability, list price, active promotion, PIX price, maximum interest-free installments |
+  | `listar_categorias` | Categories with their count of available products |
+  | `consultar_pedido` | Order status, items, tracking and computed policy deadlines; **requires the order number plus the customer's e-mail or phone**, and returns only the first name |
+  | `registrar_atendimento_humano` | Hands the case to a human and returns a protocol number |
+
+- **Prompt** (`emporio/prompt.py`, in pt-BR):
+  - The static part (about 8k tokens) holds the persona, the ground rules, how to handle
+    common situations, the interpretation notes (see [Assumptions](#7-assumptions)), and the
+    full policy manual. It is cached.
+  - A small second block carries the current date/time and whether the store is open, so the
+    cache stays valid between calls.
 
 ## 4. Technical decisions
 Every decision, with the options considered and the trade-offs, is in the
@@ -206,8 +228,15 @@ budget, the credentials and the deployments.
 
 ## 12. Repository layout
 ```
-emporio/   the agent package: cli.py, config.py, catalog.py (data and queries), rules.py
-           (pricing, installments, opening hours)
+emporio/   the agent package
+           cli.py      terminal chat (--now, --debug, --save)
+           agent.py    tool-use loop and cost guards
+           tools.py    tools the model can call
+           prompt.py   system prompt (static and cached, plus current context)
+           llm.py      API client (direct or proxy) and cost estimation
+           catalog.py  data loading and queries
+           rules.py    pricing, installments, opening hours
+           config.py   settings and usage limits
 knowledge/ politicas.md: verbatim Markdown transcription of the policy PDF (used in the prompt)
 tests/     unit tests (pytest, no model calls)
 data/      case data provided by Artefact (read-only, byte-identical)

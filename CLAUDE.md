@@ -182,11 +182,16 @@ py -3.14 -m venv .venv
 .venv\Scripts\python -m emporio --help        # chat: [--now ISO] [--debug] [--save PATH]
 .venv\Scripts\python -m pytest                # unit tests, no LLM calls
 ```
+Scripted live runs: write the customer lines (ending with `sair`) to a UTF-8 file and pipe it
+in: `.venv/Scripts/python.exe -m emporio --debug < input.txt` (Bash). `--debug` prints the
+cost of each turn; report it.
 Copy `.env.example` to `.env` for the API key. Never read, print or commit `.env`.
 
 ## Repo layout
 ```
-emporio/     cli.py · config.py (+ catalog.py · tools.py · prompt.py · agent.py · llm.py, later)
+emporio/     cli.py · agent.py · tools.py · prompt.py · llm.py · catalog.py · rules.py · config.py
+knowledge/   politicas.md (verbatim transcription of the policy PDF; fidelity-tested)
+tests/       pytest, no LLM calls (fake client for the agent loop)
 proxy/       FastAPI proxy for Render (later stage) · render.yaml at the repo root
 data/        provided case data (read-only)
 docs/        implementation plans (approved) · decision-log.md (dated decision timeline)

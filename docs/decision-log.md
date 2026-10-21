@@ -28,6 +28,7 @@ it.
 | [D16](#d16) | 2026-10-21 | Pinned dependency versions | Rael (proposed by Claude Code) |
 | [D17](#d17) | 2026-10-21 | Spend limit on the existing workspace (no dedicated one) | Rael |
 | [D18](#d18) | 2026-10-21 | Standing permission for stage commits | Rael |
+| [D19](#d19) | 2026-10-21 | Fixes from the first live run | Rael (found by Claude Code) |
 
 ---
 
@@ -290,3 +291,23 @@ it.
 - **Trade-offs:** less review before each commit, offset by small single-stage commits, a
   report after each one, and the ability to revert.
 - **Decided by:** Rael.
+
+<a id="d19"></a>
+### D19 · Fixes from the first live run
+- **Context:** the first live session answered the briefing's four questions with correct
+  values, for US$0.0038. Reading the transcript critically turned up three problems:
+  - The model worked out a return deadline itself (correctly, but by its own arithmetic).
+  - It "corrected" a product name from the data ("Cedr" → "Cedro").
+  - It assumed the customer's gender from her name ("contatada").
+- **Decision:**
+  - The order lookup now returns the policy deadlines already computed: regret return (7 days
+    after delivery), defect exchange (30 days after purchase) and legal warranty (90 days
+    after delivery). Each is marked "dentro do prazo" or "prazo encerrado".
+  - The prompt requires product names exactly as the tools return them, and gender-neutral
+    phrasing.
+  - `--debug` now prints token and cache usage, which confirmed that prompt caching works:
+    8,246 tokens written once, then read from cache.
+- **Trade-offs:** slightly larger tool outputs, in exchange for policy answers that rest on
+  computed dates rather than the model's arithmetic. Haiku follows style instructions loosely
+  at low effort; the scenario evaluations check this.
+- **Decided by:** Rael (found by Claude Code).

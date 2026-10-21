@@ -1,4 +1,4 @@
-"""Paths, store time zone and runtime settings.
+"""Paths, store time zone, runtime settings and usage limits.
 
 The API key is deliberately not stored here: the Anthropic SDK reads
 ANTHROPIC_API_KEY from the environment, so the key never passes through
@@ -26,22 +26,54 @@ STORE_TZ = ZoneInfo("America/Campo_Grande")
 DEFAULT_MODEL = "claude-haiku-5-5"
 DEFAULT_EFFORT = "low"
 EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
+BACKENDS = ("direct", "proxy")
+
+# Hosted proxy used when no API key is configured (see proxy/ and render.yaml).
+DEFAULT_PROXY_URL = ""
+
+# Usage limits that keep a session from running up costs (both modes)
+MAX_TOKENS = 2048  # per model response, thinking included
+MAX_INPUT_CHARS = 1500  # per customer message
+MAX_TOOL_ROUNDS = 5  # tool calls the model may chain before it must answer
+MAX_TURNS = 50  # customer messages per session
+SESSION_BUDGET_USD = 0.50  # estimated spend per session
 
 
 @dataclass(frozen=True)
 class Settings:
     model: str
     effort: str
+    backend: str  # "direct" (own API key) or "proxy" (hosted proxy + access code)
+    proxy_url: str
+    access_code: str | None
 
 
-def load_settings() -> Settings:
+def load_settings(env_file: Path | None = PROJECT_ROOT / ".env") -> Settings:
     """Read settings from the environment, after loading an optional .env file."""
-    load_dotenv(PROJECT_ROOT / ".env")
+    if env_file:
+        load_dotenv(env_file)
     model = os.getenv("MODEL", "").strip() or DEFAULT_MODEL
     effort = os.getenv("EFFORT", "").strip().lower() or DEFAULT_EFFORT
     if effort not in EFFORT_LEVELS:
         raise ValueError(f"EFFORT must be one of {', '.join(EFFORT_LEVELS)}; got {effort!r}")
-    return Settings(model=model, effort=effort)
+
+    has_key = bool(os.getenv("ANTHROPIC_API_KEY", "").strip())
+    backend = os.getenv("LLM_BACKEND", "").strip().lower() or ("direct" if has_key else "proxy")
+    if backend not in BACKENDS:
+        raise ValueError(f"LLM_BACKEND must be one of {', '.join(BACKENDS)}; got {backend!r}")
+    proxy_url = (os.getenv("PROXY_URL", "").strip() or DEFAULT_PROXY_URL).rstrip("/")
+    access_code = os.getenv("EMPORIO_ACCESS_CODE", "").strip() or None
+
+    if backend == "direct" and not has_key:
+        raise ValueError("direct mode needs ANTHROPIC_API_KEY in .env")
+    if backend == "proxy" and not access_code:
+        raise ValueError(
+            "proxy mode needs EMPORIO_ACCESS_CODE in .env (sent with the submission); "
+            "or set ANTHROPIC_API_KEY to use your own key"
+        )
+    if backend == "proxy" and not proxy_url:
+        raise ValueError("proxy mode needs PROXY_URL in .env")
+    return Settings(model, effort, backend, proxy_url, access_code)
 
 
 def resolve_now(iso_datetime: str | None = None) -> datetime:

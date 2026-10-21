@@ -6,6 +6,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- The agent, working in direct mode:
+  - `emporio/tools.py`: five tools (search, details, categories, verified order lookup with
+    computed policy deadlines, human handoff); no tool output contains customer contact data.
+  - `emporio/prompt.py`: cached pt-BR system prompt with the rules, interpretation notes and
+    the full manual, plus a per-call date/time and opening-hours block.
+  - `emporio/agent.py`: manual tool loop with limits (5 tool rounds, 1,500-character input,
+    50 turns or US$0.50 per session). Failed calls leave the history intact, and truncated or
+    refused replies are handled.
+  - `emporio/llm.py`: client for direct and proxy mode; cost estimates from API usage.
+  - CLI chat with `--debug` (tool calls, tokens, cost) and `--save` (Markdown transcript).
+- Tests for tools, prompt, mode selection and the agent loop (with a fake model client):
+  99 tests in total.
+- `.env.example` documents both modes; decision log D19 (fixes from the first live run).
 - `knowledge/politicas.md`: verbatim Markdown transcription of the policy manual (tables kept
   as tables), and `tests/test_policy_fidelity.py`, which requires the same numbers and the same
   vocabulary as the PDF in both directions, so a typo, an invented rule or a dropped passage
