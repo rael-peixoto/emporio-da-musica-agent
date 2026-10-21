@@ -44,8 +44,9 @@ Workflow: **understand → research → plan → execute → test → document.*
 - Update `CHANGELOG.md` (Keep a Changelog, `Unreleased` section) in the same change as the code.
 
 ## Language
-- **Agent ↔ customer: always Brazilian Portuguese (pt-BR).** Format money and dates the
-  Brazilian way: `R$ 1.299,00`, `22/10/2026`.
+- **Agent ↔ customer: Brazilian Portuguese (pt-BR) by default.** A customer who writes in
+  another language (e.g. English) may be answered in that language (decision D23). Format
+  money and dates the Brazilian way: `R$ 1.299,00`, `22/10/2026`.
 - **Code, identifiers, comments, commit messages, README and docs: English** (the recruiter
   asked for English). Exceptions: the persona/prompt text and pt-BR example conversations.
 
@@ -127,7 +128,8 @@ Each issue below needs an explicit handling decision, documented in the README:
 - **Order access:** order number + e-mail or phone of that order's customer.
 - The handling of each data/policy issue listed above is in the plan, §2, and in README §7.
 - **Two transports, one agent:** the agent, tools and data always run locally.
-  - Default: model calls go through `proxy/` (FastAPI on Render, holds the key server-side).
+  - Default: model calls go through `proxy/` (FastAPI on Render, holds the key server-side),
+    deployed at `https://emporio-proxy.onrender.com` (free tier; cold start about 50 s).
   - Direct mode: the reviewer's own `ANTHROPIC_API_KEY`.
   - Mode: direct if the key is set, else proxy; `LLM_BACKEND` forces one. In proxy mode the
     client sends the access code as its `api_key`, so a reviewer's real key never reaches the

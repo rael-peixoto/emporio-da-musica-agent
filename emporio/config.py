@@ -29,7 +29,7 @@ EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 BACKENDS = ("direct", "proxy")
 
 # Hosted proxy used when no API key is configured (see proxy/ and render.yaml).
-DEFAULT_PROXY_URL = ""
+DEFAULT_PROXY_URL = "https://emporio-proxy.onrender.com"
 
 # Usage limits that keep a session from running up costs (both modes)
 MAX_TOKENS = 2048  # per model response, thinking included

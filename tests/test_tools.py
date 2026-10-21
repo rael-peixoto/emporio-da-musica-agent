@@ -46,6 +46,22 @@ def test_search_violoes_up_to_1000(toolbox):
     }
 
 
+@pytest.mark.parametrize(
+    ("term", "product_id", "label"),
+    [("Giannini GF-3D", 96, "temporariamente indisponível"), ("Shelby SN-7C", 113, "descontinuado")],
+)
+def test_named_unavailable_product_is_reported_not_hidden(toolbox, term, product_id, label):
+    result = call(toolbox, "buscar_produtos", termo=term)
+    assert [p["id"] for p in result["produtos"]] == [product_id]
+    assert result["produtos"][0]["disponibilidade"].startswith(label)
+    assert "não estão disponíveis" in result["observacao"]
+
+
+def test_available_matches_need_no_fallback(toolbox):
+    result = call(toolbox, "buscar_produtos", termo="Takamine GD20")
+    assert "observacao" not in result
+
+
 def test_takamine_gd20_details(toolbox):
     details = call(toolbox, "detalhes_produto", produto_id=95)
     assert details["preco_final"] == "R$ 2.199,00"

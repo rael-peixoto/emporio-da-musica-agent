@@ -172,15 +172,26 @@ class ToolBox:
 
     def _tool_buscar_produtos(self, termo=None, categoria=None, preco_min=None, preco_max=None,
                               cordas=None, eletrico=None, incluir_indisponiveis=False):
-        found = self.catalog.search(
-            term=termo,
-            category=categoria,
-            min_price=None if preco_min is None else Decimal(str(preco_min)),
-            max_price=None if preco_max is None else Decimal(str(preco_max)),
-            strings=cordas,
-            electric=eletrico,
-            only_sellable=not incluir_indisponiveis,
-        )
+        def search(only_sellable):
+            return self.catalog.search(
+                term=termo,
+                category=categoria,
+                min_price=None if preco_min is None else Decimal(str(preco_min)),
+                max_price=None if preco_max is None else Decimal(str(preco_max)),
+                strings=cordas,
+                electric=eletrico,
+                only_sellable=only_sellable,
+            )
+
+        found = search(only_sellable=not incluir_indisponiveis)
+        note = None
+        if not found and termo and not incluir_indisponiveis:
+            # A customer asking for a specific model must hear "out of stock" or "discontinued"
+            # (§7.3), never "not in the catalogue" just because the item can't be sold right now
+            found = search(only_sellable=False)
+            if found:
+                note = ("Nenhum item disponível para venda corresponde à busca; estes existem no "
+                        "catálogo, mas não estão disponíveis (veja a disponibilidade de cada um).")
         products = []
         for p in found[:MAX_SEARCH_RESULTS]:
             item = {"id": p.id, "nome": p.name, "categoria": p.category.name,
@@ -188,7 +199,10 @@ class ToolBox:
             if p.promotion:
                 item["promocao"] = promotion_text(p)
             products.append(item)
-        return {"total_encontrado": len(found), "produtos": products}
+        result = {"total_encontrado": len(found), "produtos": products}
+        if note:
+            result["observacao"] = note
+        return result
 
     def _tool_detalhes_produto(self, produto_id):
         product = self.catalog.products.get(int(produto_id))

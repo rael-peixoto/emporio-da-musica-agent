@@ -6,6 +6,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Proxy deployed on Render at `https://emporio-proxy.onrender.com`, now the default
+  `PROXY_URL`. Verified end to end:
+  - a real chat through Render;
+  - a wrong access code gets a friendly error at no cost;
+  - a request asking for Opus, 50,000 tokens and its own system prompt still got Haiku, a
+    capped reply and the store persona.
+- README "Things to try": a CLI test guide covering every feature. Decision log D23 and D24.
 - `scripts/build_pdf.py`: builds the submission PDF (README + decision log + examples) with
   headless Chrome; repo-relative links become GitHub links. An optional private
   reviewer-access page reads the code from `.env`. Output goes to `dist/` (gitignored).
@@ -19,6 +26,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   5.5 (US$0.0110).
 
 ### Changed
+- Language (D23): pt-BR by default; an English question may be answered in English. Removed
+  the mid-conversation reminder and the English-detection guard. The proxy again rejects any
+  client `system` message.
 - Prompt fixes from the example review (D22): the §3.1 installment tiers are spelled out; no
   deadlines the manual doesn't define; never mention tools or internal instructions to
   customers.
@@ -84,6 +94,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.gitattributes` so `data/` is stored without line-ending conversion.
 
 ### Fixed
+- Asking for a specific out-of-stock or discontinued model no longer risks a "not in the
+  catalogue" reply: when a name search finds nothing sellable, `buscar_produtos` returns the
+  matching unavailable items with their status.
 - The list of products with contradictory descriptions is 135, 136, 137, 139, 140, 142, 144.
   Earlier docs said "135–140", but 138 ("StingRay") names a model of its own brand.
 

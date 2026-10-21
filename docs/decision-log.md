@@ -32,6 +32,8 @@ it.
 | [D20](#d20) | 2026-10-21 | Keep Claude Haiku 5.5 after the evaluations | Rael (rule set in D9) |
 | [D21](#d21) | 2026-10-21 | Enforce pt-BR replies in code, not only in the prompt | Rael (measured by Claude Code) |
 | [D22](#d22) | 2026-10-21 | Prompt fixes from reviewing the example transcripts | Rael (found by Claude Code) |
+| [D23](#d23) | 2026-10-21 | pt-BR by default; English answers allowed (supersedes D21) | Rael |
+| [D24](#d24) | 2026-10-21 | No Sonnet comparison run; Haiku is enough at this scale | Rael |
 
 ---
 
@@ -332,6 +334,8 @@ it.
 
 <a id="d21"></a>
 ### D21 · Enforce pt-BR replies in code, not only in the prompt
+> **Superseded by [D23](#d23):** the requirement changed, and this mechanism was removed. Kept
+> as a record of how a hard rule was measured and enforced.
 - **Context:** the requirement is that the agent always answers in pt-BR. Re-running the suite
   showed Haiku sometimes answering an English question in English. Each attempt was measured
   on the `idioma` scenario:
@@ -376,3 +380,27 @@ it.
 - **Trade-offs:** re-running an example is curation. To stay honest, the slips that were seen
   are recorded here and in the README's known limitations.
 - **Decided by:** Rael (found by Claude Code).
+
+<a id="d23"></a>
+### D23 · pt-BR by default; English answers allowed (supersedes D21)
+- **Context:** D21 enforced "always pt-BR" with a mid-conversation reminder and a code guard.
+  Rael then revised the requirement: most customers write in Portuguese, so pt-BR is the
+  default, and answering an English question in English is fine.
+- **Decision:**
+  - The prompt rule now reads: pt-BR by default; reply in the customer's language when they
+    write in another one (e.g. English).
+  - The reminder and the English-detection guard were removed, and the proxy again rejects
+    any `system` message from the client.
+  - The evaluation scenario now checks that an English question gets a correct answer.
+- **Trade-offs:** less code and one fewer API call in edge cases. Replying in other languages
+  besides English is an interpretation of the revised rule.
+- **Decided by:** Rael.
+
+<a id="d24"></a>
+### D24 · No Sonnet comparison run; Haiku is enough at this scale
+- **Context:** D9/D20 left an optional Sonnet 5.5 run (about US$0.20) for a comparison table.
+- **Decision:** skip it. Haiku passed the critical scenarios, and its cost profile fits the
+  store's scale. Revisit Sonnet if the business grows or the evaluations start failing;
+  `python -m evals.run --model claude-sonnet-5-5` makes that a measured switch.
+- **Trade-offs:** no measured Sonnet baseline in the README.
+- **Decided by:** Rael.

@@ -79,7 +79,7 @@ SCENARIOS = [
      "tools": ["registrar_atendimento_humano"], "contains": ["24 horas úteis", "EM-"]},
     {"id": "fora_do_horario", "now": SUNDAY, "messages": ["Vocês estão abertos agora?"],
      "contains": ["segunda", "09:00"]},
-    {"id": "idioma", "messages": ["Hi! Do you sell ukuleles?"],
-     "any_of": [["temos", "olá", "disponíveis", "disponível"]],
-     "absent": ["we have", "yes, we", " available"]},
+    # pt-BR by default; an English question may be answered in English (decision D23)
+    {"id": "pergunta_em_ingles", "messages": ["Hi! What is the cheapest ukulele you have?"],
+     "tools": ["buscar_produtos"], "contains": ["Shelby SU-21S", "159,90"]},
 ]

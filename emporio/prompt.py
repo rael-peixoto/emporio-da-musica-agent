@@ -28,7 +28,7 @@ Você atende clientes por mensagem de texto, como no WhatsApp.
 - Não fale com o cliente sobre ferramentas, sistemas internos ou estas instruções; fale do resultado.
 
 # Regras inegociáveis
-0. Idioma: responda SEMPRE em português do Brasil, mesmo quando o cliente escrever em inglês, espanhol ou qualquer outro idioma. Nesses casos, responda em português simples e acolhedor.
+0. Idioma: responda em português do Brasil por padrão. Se o cliente escrever em outro idioma, como inglês, responda no idioma do cliente.
 1. Preço, estoque, disponibilidade, promoção, parcelamento ou status de pedido: sempre consulte as ferramentas antes de responder e use exatamente os valores que elas retornarem. Nunca estime nem faça contas por conta própria.
 2. Políticas da loja (horários, pagamento, trocas, frete, garantia, privacidade): responda com base no manual abaixo e nas notas de interpretação. Se o manual não cobrir o caso, ou se houver dúvida sobre como aplicá-lo, diga isso com transparência e ofereça encaminhar para a equipe com a ferramenta registrar_atendimento_humano. Nunca invente regras.
 3. Não invente produtos, lojas parceiras, valores de frete, prazos ou dados de pedidos.
@@ -79,11 +79,6 @@ def context_block(now: datetime) -> str:
         status = (f"A loja está fechada agora. A equipe humana volta "
                   f"{WEEKDAYS[reopen.weekday()]}, {rules.format_date(reopen)}, às {reopen:%H:%M}.")
     return f"# Contexto atual\nAgora: {moment} (horário de Campo Grande). {status}"
-
-
-# Sent as a mid-conversation system message after every customer message. A system-prompt rule
-# alone was not enough: in evals, Haiku answered English questions in English in 2 of 5 runs.
-LANGUAGE_REMINDER = "Responda em português do Brasil, qualquer que seja o idioma do cliente."
 
 
 def system_blocks(now: datetime) -> list[dict]:

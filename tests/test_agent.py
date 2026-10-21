@@ -65,17 +65,8 @@ def test_runs_tools_and_returns_the_final_text(catalog, tmp_path):
     assert '"preco_final": "R$ 2.199,00"' in turn.tool_calls[0].output
     second_request = client.calls[1]["messages"]
     assert second_request[-1]["content"][0]["type"] == "tool_result"
-    assert [m["role"] for m in agent.history] == ["user", "system", "assistant", "user", "assistant"]
+    assert [m["role"] for m in agent.history] == ["user", "assistant", "user", "assistant"]
     assert turn.api_calls == 2 and turn.cost_usd > 0
-
-
-def test_language_reminder_follows_every_customer_message(catalog, tmp_path):
-    agent, client = make_agent(catalog, tmp_path, text("Olá!"), text("Temos sim."))
-    agent.send("Hi!")
-    agent.send("Do you sell ukuleles?")
-    roles = [m["role"] for m in client.calls[1]["messages"]]
-    assert roles == ["user", "system", "assistant", "user", "system"]
-    assert client.calls[1]["messages"][-1]["content"] == agent_module.LANGUAGE_REMINDER
 
 
 def test_requests_carry_cached_prompt_tools_and_limits(catalog, tmp_path):
@@ -98,37 +89,6 @@ def test_last_round_forbids_tools_so_the_model_must_answer(catalog, tmp_path):
     assert len(client.calls) == MAX_TOOL_ROUNDS + 1
     assert client.calls[-1]["tool_choice"] == {"type": "none"}
     assert all("tool_choice" not in c for c in client.calls[:-1])
-
-
-@pytest.mark.parametrize(
-    ("reply", "english"),
-    [
-        ("Yes, we do! We have several ukuleles in stock, in different sizes.", True),
-        ("Hi! Yes, we do. Ukuleles are in stock, from soprano to barítono.", True),
-        ("Oi! Sim, temos ukuleles disponíveis: Kala KA-C Concert Mogno por R$ 349,90.", False),
-        ("O Taylor 110e Dreadnought Natural está em promoção de 8% de desconto.", False),
-    ],
-)
-def test_looks_english(reply, english):
-    assert agent_module.looks_english(reply) is english
-
-
-def test_english_reply_is_resampled_once_and_never_stored(catalog, tmp_path):
-    agent, client = make_agent(catalog, tmp_path,
-                               text("Yes, we do! We have ukuleles in stock for you."),
-                               text("Sim, temos ukuleles!"))
-    turn = agent.send("Do you sell ukuleles?")
-    assert turn.reply == "Sim, temos ukuleles!"
-    assert len(client.calls) == 2
-    assert client.calls[0]["messages"] == client.calls[1]["messages"]  # same request, resampled
-    assert all("Yes, we do" not in str(m["content"]) for m in agent.history)
-
-
-def test_language_retry_happens_at_most_once(catalog, tmp_path):
-    english = "Yes, we do! We have ukuleles in stock for you."
-    agent, client = make_agent(catalog, tmp_path, text(english), text(english))
-    assert agent.send("Do you sell ukuleles?").reply == english
-    assert len(client.calls) == 2
 
 
 def test_overlong_message_is_rejected_without_calling_the_api(catalog, tmp_path):
