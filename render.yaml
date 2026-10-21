@@ -1,0 +1,19 @@
+# Render Blueprint for the reviewer proxy (free plan). See README §6.
+services:
+  - type: web
+    name: emporio-proxy
+    runtime: python
+    plan: free
+    buildCommand: pip install -r proxy/requirements.txt
+    # --no-access-log: uvicorn's access log would record client IP addresses
+    startCommand: uvicorn --factory proxy.app:create_app --host 0.0.0.0 --port $PORT --no-access-log
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false # entered in the Render dashboard, never committed
+      - key: EMPORIO_ACCESS_CODE
+        generateValue: true # random 256-bit value; read it in the dashboard to share with reviewers
+      - key: PROXY_DAILY_BUDGET_USD
+        value: "1.00"
+      - key: PROXY_REQUESTS_PER_MINUTE
+        value: "30"

@@ -34,7 +34,8 @@ Workflow: **understand → research → plan → execute → test → document.*
 ## Git
 - **Standing permission (granted 2026-10-21):** commit and push at each stage checkpoint, only
   when the tests pass and after a secret scan of the staged diff; report what went in
-  afterwards. Anything else outward-facing (new repos, deployments, publishing, history
+  afterwards. The commit must be *conditional* on the scan finding no real key shapes
+  (`sk-ant-…`, or a long `EMPORIO_ACCESS_CODE=` value); fake values in tests don't count. Anything else outward-facing (new repos, deployments, publishing, history
   rewrites) still needs explicit permission each time.
 - Evaluators want real incremental history: small meaningful commits, never force-push or
   squash everything into one commit.

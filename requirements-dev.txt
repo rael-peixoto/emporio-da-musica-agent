@@ -1,5 +1,8 @@
 -r requirements.txt
+-r proxy/requirements.txt
 pytest==9.1.1
+# FastAPI's TestClient (proxy tests)
+httpx==0.28.1
 # Policy-transcription fidelity test (reads the original PDF)
 pypdf==6.21.2
 # Builds the submission PDF from the README and example conversations

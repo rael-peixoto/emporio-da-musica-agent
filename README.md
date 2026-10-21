@@ -32,7 +32,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Data layer and unit tests | Done |
 | Policy manual transcription and fidelity test | Done |
 | Tools, prompt, agent loop, command-line chat (direct mode) | Done |
-| Hosted proxy (FastAPI on Render) and proxy mode | Planned |
+| Hosted proxy (FastAPI on Render) and proxy mode | Built and tested locally; deployment pending |
 | Scenario evaluations (Haiku 5.5 vs Sonnet 5.5) | Planned |
 | Example conversations | Planned |
 | Final documentation and submission PDF | Planned |
@@ -52,8 +52,11 @@ What the agent does:
 You need Python 3.11+ (developed on 3.14). Two ways to run it, both using the same agent code:
 - **A. Hosted proxy (default, no API key needed):** you run the agent locally, and its model
   calls go through the author's proxy. You need the access code sent with the submission. It
-  is not published here, to protect the API budget. _(planned: proxy stage)_
+  is not published here, to protect the API budget.
 - **B. Your own Anthropic API key (direct mode):** the agent calls Anthropic directly.
+
+If `ANTHROPIC_API_KEY` is set, direct mode is used; otherwise the proxy is. `LLM_BACKEND=proxy`
+or `LLM_BACKEND=direct` in `.env` forces a mode. The chat prints which mode is active.
 
 ```
 git clone https://github.com/rael-peixoto/emporio-da-musica-agent.git
@@ -63,7 +66,8 @@ python -m venv .venv
 # .venv/bin/python -m pip install -r requirements.txt       # macOS / Linux
 copy .env.example .env                                        # macOS / Linux: cp
 ```
-Edit `.env` and fill in `ANTHROPIC_API_KEY` (option B), then start the chat:
+Edit `.env` and fill in **either** `EMPORIO_ACCESS_CODE` (option A) **or** `ANTHROPIC_API_KEY`
+(option B), then start the chat:
 ```
 .venv\Scripts\python -m emporio                   # chat in the terminal; type "sair" to quit
 .venv\Scripts\python -m emporio --debug           # also show tool calls, tokens and cost
@@ -76,8 +80,10 @@ Edit `.env` and fill in `ANTHROPIC_API_KEY` (option B), then start the chat:
 **Cost:** about US$0.001–0.002 per customer message on Claude Haiku 5.5. In a measured run,
 the 8,246-token cached prompt was written once and then read from cache on every later call.
 
+In proxy mode, the first message may take up to a minute if the free server was asleep; the
+chat shows a "Conectando ao servidor..." message while it wakes.
+
 ## 3. How it works
-_(direct mode is implemented; the proxy route is planned)_
 ```
                 ┌─ direct:  Anthropic SDK ──────────────────────────► api.anthropic.com
 CLI ─► agent ──┤            (your own key)
@@ -121,21 +127,50 @@ Every decision, with the options considered and the trade-offs, is in the
 | Reviewer access | Hosted FastAPI proxy (default) or your own key | Reviewers don't need a key; the author's key never leaves the server |
 
 ## 5. Security & cost safeguards
-_(planned; see [decision D15](docs/decision-log.md#d15))_
+The project runs on a US$5 prepaid API budget, so protection is layered. Decisions
+[D13–D15](docs/decision-log.md#d13) explain why.
 
-Layered protection for a US$5 prepaid API budget:
-- A prepaid balance with no auto-reload.
-- A US$3 monthly spend limit on the Anthropic workspace that holds the key.
-- Keys only in environment variables, never in git; GitHub push protection is enabled.
-- The proxy requires an access code.
-- The proxy enforces its own model, length cap, system prompt and tool list, so it only works
-  as this assistant.
-- The proxy also limits request size, applies a global rate limit and a daily dollar budget.
-- On the client side: limits on tool rounds per message, input length, and spend per session.
-- Logs record no message content.
+| Layer | Measure | What it prevents |
+|---|---|---|
+| Anthropic account | Prepaid balance, auto-reload off | Absolute ceiling of US$5 |
+| Anthropic workspace | US$3 monthly spend limit | Persistent cap, even if the proxy restarts |
+| Secrets | API key only in Render's environment variables and a local `.env` (gitignored, including `.env.*`); GitHub push protection detects Anthropic keys | Key leaks |
+| Proxy: access | Access code (random, 256-bit) compared in constant time, sent as `x-api-key` or `Authorization: Bearer` | Strangers using the budget |
+| Proxy: pinning | The server replaces the model (Haiku 5.5), effort, `max_tokens`, system prompt and tool list with its own copies; the client supplies only the conversation and a small date/time block (≤ 600 chars) | Using the proxy as a free general-purpose Claude endpoint; expensive models; long outputs |
+| Proxy: limits | Body ≤ 512 KB; ≤ 100 messages; user text ≤ 1,500 chars; global 30 requests/min (`429`); US$1/day estimated budget (`403`, checked *before* calling Anthropic) | Token stuffing, bursts, slow drains |
+| Proxy: errors | Upstream key or spend-limit errors are returned as a generic `503` | Leaking account details |
+| Client | ≤ 5 tool rounds per message; ≤ 1,500 characters per message; session ends at 50 turns or US$0.50 estimated | Runaway loops (this also protects reviewers' own keys) |
+| Privacy | Proxy logs record tokens and cost only: no message content and no IP addresses (uvicorn's access log is off) | Personal data in logs (LGPD) |
+
+**Not done:** per-IP rate limiting. Render's `X-Forwarded-For` header can be spoofed by the
+client, so it would give false assurance.
+
+**Known gap:** the proxy's counters live in memory and reset when the free instance restarts.
+The Anthropic workspace limit is the persistent backstop.
 
 ## 6. Deploying your own proxy
-_(planned: Render Blueprint `render.yaml`, step-by-step)_
+The proxy is `proxy/app.py` (FastAPI). [`render.yaml`](render.yaml) is a Render Blueprint for
+the free plan.
+1. **Anthropic Console:** set a monthly spend limit on the workspace and create an API key.
+2. **Render:**
+   - Sign in with GitHub → **New → Blueprint** → select this repository.
+   - When asked for `ANTHROPIC_API_KEY`, paste the key. `EMPORIO_ACCESS_CODE` is generated
+     automatically (a random 256-bit value).
+   - Deploy. Render installs `proxy/requirements.txt` and runs
+     `uvicorn --factory proxy.app:create_app --no-access-log`; `/health` is the health check.
+3. Copy the service URL into `PROXY_URL`, and give reviewers the access code privately
+   (`EMPORIO_ACCESS_CODE` in their `.env`).
+
+Optional environment variables: `PROXY_DAILY_BUDGET_USD` (default 1.00),
+`PROXY_REQUESTS_PER_MINUTE` (default 30), `PROXY_MODEL`, `PROXY_EFFORT`.
+
+To run it locally (for example, to test proxy mode):
+```
+set EMPORIO_ACCESS_CODE=<a-long-random-test-code>   # PowerShell: $env:EMPORIO_ACCESS_CODE="..."
+.venv\Scripts\python -m uvicorn --factory proxy.app:create_app --port 8765 --no-access-log
+```
+The proxy also needs `ANTHROPIC_API_KEY` in its environment. Then run the chat with
+`LLM_BACKEND=proxy`, `PROXY_URL=http://127.0.0.1:8765` and the same code.
 
 ## 7. Assumptions
 The data and the manual contradict themselves in places. Each case has one explicit rule (see
@@ -238,7 +273,9 @@ emporio/   the agent package
            rules.py    pricing, installments, opening hours
            config.py   settings and usage limits
 knowledge/ politicas.md: verbatim Markdown transcription of the policy PDF (used in the prompt)
+proxy/     app.py: FastAPI proxy that holds the API key server-side (deployed on Render)
 tests/     unit tests (pytest, no model calls)
+render.yaml  Render Blueprint for the proxy
 data/      case data provided by Artefact (read-only, byte-identical)
 docs/      implementation plans and decision log
 CLAUDE.md  rules followed by the AI coding assistant

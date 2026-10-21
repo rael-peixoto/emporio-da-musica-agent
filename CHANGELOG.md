@@ -6,6 +6,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Hosted proxy for reviewers (`proxy/app.py`, FastAPI), which keeps the API key server-side:
+  - Exposes `POST /v1/messages`, so the agent's standard SDK client only changes its base URL.
+  - Access code in `x-api-key` or `Authorization: Bearer` (Anthropic SDK 2.0 sends the
+    latter), compared in constant time.
+  - Replaces the model, effort, `max_tokens`, system prompt and tool list with the server's
+    own copies.
+  - Limits on body, message and user-text size; global rate limit (429 with `retry-after`);
+    daily US$ budget checked before calling Anthropic (403); generic 503 for upstream
+    key/limit errors; metadata-only logs.
+- `render.yaml` (Render Blueprint, free plan), `.python-version`, `proxy/requirements.txt`.
+- `tests/test_proxy.py` (18 tests, fake upstream). Verified end to end against a local proxy
+  with a real Haiku call; the proxy log showed tokens and cost but no content.
+- README: both quick-start modes, the security and cost safeguards table, and proxy deployment
+  steps.
 - The agent, working in direct mode:
   - `emporio/tools.py`: five tools (search, details, categories, verified order lookup with
     computed policy deadlines, human handoff); no tool output contains customer contact data.
