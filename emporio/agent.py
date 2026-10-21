@@ -6,6 +6,7 @@ Anthropic API directly or through the hosted proxy; only the client differs.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -15,7 +16,7 @@ from emporio import config
 from emporio.catalog import Catalog
 from emporio.config import Settings
 from emporio.llm import estimate_cost
-from emporio.prompt import system_blocks
+from emporio.prompt import LANGUAGE_REMINDER, system_blocks
 from emporio.tools import TOOLS, ToolBox
 
 TOO_LONG = ("Sua mensagem ficou um pouco longa para mim. Pode resumir em até "
@@ -25,6 +26,25 @@ SESSION_OVER = ("Esta conversa atingiu o limite de mensagens desta demonstraçã
 REFUSED = ("Desculpe, não consigo ajudar com isso por aqui. Posso te ajudar com algo sobre "
            "nossos instrumentos ou pedidos?")
 NO_TEXT = "Desculpe, não consegui formular uma resposta. Pode repetir a pergunta?"
+
+# Function words that tell an English reply from a Portuguese one (product names don't count)
+ENGLISH_WORDS = frozenset(
+    "the and you we is are have for with your our can would any what yes it this that there "
+    "they from if in to of be will".split())
+PORTUGUESE_WORDS = frozenset(
+    "de que não para com você em os as um uma temos está se por mais da do no na é o e ou "
+    "também posso pode sim".split())
+
+
+def looks_english(text: str) -> bool:
+    words = re.findall(r"[a-zà-ú]+", text.lower())
+    english = sum(w in ENGLISH_WORDS for w in words)
+    portuguese = sum(w in PORTUGUESE_WORDS for w in words)
+    return english >= 3 and english > portuguese
+
+
+def reply_text(response) -> str:
+    return "\n".join(b.text for b in response.content if b.type == "text").strip()
 
 
 @dataclass
@@ -68,6 +88,9 @@ class Agent:
         turn = Turn(text, "")
         checkpoint = len(self.history)
         self.history.append({"role": "user", "content": text})
+        # Operator reminder right after the customer's words (mid-conversation system message).
+        # Kept in the history: the API expects history to be append-only.
+        self.history.append({"role": "system", "content": LANGUAGE_REMINDER})
         try:
             response = self._run_tool_loop(turn)
         except Exception:
@@ -91,8 +114,9 @@ class Agent:
         return turn
 
     def _run_tool_loop(self, turn: Turn):
-        for round_ in range(config.MAX_TOOL_ROUNDS + 1):
-            last_round = round_ == config.MAX_TOOL_ROUNDS
+        rounds, language_retries = 0, 1
+        while True:
+            last_round = rounds == config.MAX_TOOL_ROUNDS
             response = self._call(tool_choice={"type": "none"} if last_round else None)
             turn.api_calls += 1
             turn.model = response.model
@@ -103,7 +127,13 @@ class Agent:
             turn.tokens["cache_read"] += usage.cache_read_input_tokens or 0
             turn.tokens["cache_write"] += usage.cache_creation_input_tokens or 0
             if response.stop_reason != "tool_use":
+                # Hard rule enforced in code: an English reply is resampled once. The discarded
+                # reply never enters the history, so the history stays append-only.
+                if language_retries and looks_english(reply_text(response)):
+                    language_retries -= 1
+                    continue
                 return response
+            rounds += 1
             self.history.append({"role": "assistant", "content": response.content})
             results = []
             for block in response.content:
@@ -114,7 +144,6 @@ class Agent:
                 results.append({"type": "tool_result", "tool_use_id": block.id,
                                 "content": output, "is_error": is_error})
             self.history.append({"role": "user", "content": results})
-        raise AssertionError("the last round forbids tools, so it cannot end in tool_use")
 
     def _call(self, tool_choice: dict | None):
         params = {

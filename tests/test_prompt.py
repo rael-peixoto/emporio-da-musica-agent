@@ -19,7 +19,9 @@ def test_static_prompt_is_stable_for_caching():
 
 def test_context_when_open():
     friday = datetime(2026, 10, 23, 17, 0, tzinfo=STORE_TZ)
-    assert context_block(friday).endswith("A loja está aberta agora (hoje até 18:00).")
+    assert "A loja está aberta agora (hoje até 18:00)." in context_block(friday)
+
+
 
 
 def test_context_when_closed_says_when_humans_return():

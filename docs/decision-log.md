@@ -30,6 +30,8 @@ it.
 | [D18](#d18) | 2026-10-21 | Standing permission for stage commits | Rael |
 | [D19](#d19) | 2026-10-21 | Fixes from the first live run | Rael (found by Claude Code) |
 | [D20](#d20) | 2026-10-21 | Keep Claude Haiku 5.5 after the evaluations | Rael (rule set in D9) |
+| [D21](#d21) | 2026-10-21 | Enforce pt-BR replies in code, not only in the prompt | Rael (measured by Claude Code) |
+| [D22](#d22) | 2026-10-21 | Prompt fixes from reviewing the example transcripts | Rael (found by Claude Code) |
 
 ---
 
@@ -327,3 +329,50 @@ it.
 - **Trade-offs:** a stronger model could phrase edge cases more carefully, at about 20× the
   cost. The suite makes switching a measured decision (`--model`).
 - **Decided by:** Rael (rule set in D9).
+
+<a id="d21"></a>
+### D21 · Enforce pt-BR replies in code, not only in the prompt
+- **Context:** the requirement is that the agent always answers in pt-BR. Re-running the suite
+  showed Haiku sometimes answering an English question in English. Each attempt was measured
+  on the `idioma` scenario:
+
+  | Attempt | Replies in pt-BR |
+  |---|---|
+  | Rule in the system prompt's tone section | Failed a full-suite run |
+  | Rule moved to the non-negotiable list, plus a reminder in the per-call context block | 3/5 |
+  | Same, at effort `medium` | 4/5 (rejected: costs more on every call and is still unreliable) |
+  | A mid-conversation `system` message after each customer message | 7/8 |
+  | **The same message plus a code guard** | **10/10** (8 dedicated runs + 2 full suites) |
+
+  A mid-conversation `system` message is the API's channel for operator instructions; customer
+  text can't imitate it.
+- **Decision:** keep the mid-conversation reminder, and add the code guard.
+  - The guard counts English vs Portuguese function words in the final reply. If the reply
+    looks English, the same request is sent once more and the English reply is discarded.
+  - The discarded reply never enters the history, so the history stays append-only, as the
+    API requires.
+  - The proxy accepts only this exact reminder text as a `system` message.
+- **Trade-offs:** an occasional extra call (about US$0.0005), and a word-count heuristic
+  rather than a language model. That is enough for English vs Portuguese, not for every
+  language. It follows the project's principle (D5): hard rules are enforced in code, and the
+  prompt alone is not trusted with them.
+- **Decided by:** Rael (measured by Claude Code).
+
+<a id="d22"></a>
+### D22 · Prompt fixes from reviewing the example transcripts
+- **Context:** every example conversation was read in full, and its amounts were checked
+  automatically against the data. The review found:
+  - The credit-card rules were quoted from the manual's summary table ("parcela mínima de
+    R$ 100,00"), contradicting the documented assumption that the §3.1 tiers prevail.
+  - A return handoff promised "24 horas úteis", which the manual only defines for complaints.
+  - One take mentioned the internal tooling ("a ferramenta não informou um prazo").
+  - One take called the ukulele a "violino" and corrected itself.
+- **Decision:**
+  - The prompt now spells out the §3.1 tiers.
+  - Handoffs other than complaints promise no deadline the manual doesn't define.
+  - The prompt says never to talk about tools or internal instructions.
+  - Affected examples were regenerated: real, unedited runs, never hand-edited. The scenario
+    suite gained a `regras_de_parcelamento` check and was re-run: 22/22.
+- **Trade-offs:** re-running an example is curation. To stay honest, the slips that were seen
+  are recorded here and in the README's known limitations.
+- **Decided by:** Rael (found by Claude Code).

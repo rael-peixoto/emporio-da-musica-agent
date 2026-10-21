@@ -27,7 +27,7 @@ from starlette.concurrency import run_in_threadpool
 
 from emporio import config
 from emporio.llm import estimate_cost
-from emporio.prompt import static_prompt
+from emporio.prompt import LANGUAGE_REMINDER, static_prompt
 from emporio.tools import TOOLS
 
 log = logging.getLogger("emporio.proxy")
@@ -117,9 +117,11 @@ def validate(payload) -> str | None:
     if not isinstance(messages, list) or not 1 <= len(messages) <= MAX_MESSAGES:
         return f"messages must be a list of 1 to {MAX_MESSAGES} items"
     for message in messages:
-        if not isinstance(message, dict) or message.get("role") not in ("user", "assistant"):
-            return "each message needs role user or assistant"
+        if not isinstance(message, dict) or message.get("role") not in ("user", "assistant", "system"):
+            return "each message needs role user, assistant or system"
         content = message.get("content")
+        if message["role"] == "system" and content != LANGUAGE_REMINDER:
+            return "unexpected system message"  # only the agent's fixed reminder is allowed
         if not isinstance(content, (str, list)):
             return "message content must be text or a list of blocks"
         if message["role"] == "user":

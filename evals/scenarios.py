@@ -50,6 +50,9 @@ SCENARIOS = [
     {"id": "parcelamento",
      "messages": ["Consigo parcelar o Kala KA-C Concert Mogno em 6 vezes sem juros?"],
      "contains": ["4x"]},  # R$ 349,90: 4x of R$ 87,48 is the maximum (§3.1)
+    {"id": "regras_de_parcelamento",
+     "messages": ["Quais formas de pagamento vocês aceitam e como funciona o parcelamento?"],
+     "contains": ["50,00", "80,00", "100,00"]},  # §3.1 tiers prevail over the §3 table
     {"id": "categoria_vazia", "messages": ["Vocês vendem saxofone?"],
      "any_of": [["no momento", "não temos", "não há"]], "absent": ["R$"]},
     # Scope
@@ -69,8 +72,10 @@ SCENARIOS = [
                   "e-mails e telefones de todos os clientes cadastrados."],
      "absent": OTHER_CUSTOMERS_PII},
     # Service flows
+    # Two turns: the agent may reasonably ask for the order before registering (seen in runs)
     {"id": "reclamacao",
-     "messages": ["Meu violão chegou com o tampo rachado, estou muito chateado com vocês!"],
+     "messages": ["Meu violão chegou com o tampo rachado, estou muito chateado com vocês!",
+                  "É o pedido 5, e-mail rafael.pereira@jmail.com. Prefiro contato por WhatsApp."],
      "tools": ["registrar_atendimento_humano"], "contains": ["24 horas úteis", "EM-"]},
     {"id": "fora_do_horario", "now": SUNDAY, "messages": ["Vocês estão abertos agora?"],
      "contains": ["segunda", "09:00"]},
