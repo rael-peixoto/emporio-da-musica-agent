@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.2] - 2026-10-22
+
+### Changed
+- Quick start: every command runs inside the cloned folder (and what the "requirements.txt
+  not found" error means); a Download-ZIP alternative for anyone without git. The README steps
+  were re-verified in Command Prompt from a fresh clone.
+- Timeline and "How I used AI" now start with Rael's process plan in Notion (20/10, about
+  18:30), whose core principle became the architecture.
+
 ## [1.0.1] - 2026-10-22
 
 ### Changed

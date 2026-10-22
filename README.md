@@ -27,8 +27,10 @@ You need Python 3.11+ (developed on 3.14). Two ways to run it, both using the sa
   budget.
 - **B. Your own Anthropic API key (direct mode):** the agent calls Anthropic directly.
 
-The commands below work in both Windows terminals, **Command Prompt (cmd)** and **PowerShell**,
-from any folder you choose:
+The commands below work in both Windows terminals, **Command Prompt (cmd)** and **PowerShell**.
+Run them one after another in the same window. **After `cd`, every command must run inside the
+`emporio-da-musica-agent` folder**; if you see "No such file: requirements.txt", you're in the
+wrong folder.
 ```
 git clone https://github.com/rael-peixoto/emporio-da-musica-agent.git
 cd emporio-da-musica-agent
@@ -37,6 +39,8 @@ python -m venv .venv
 .venv\Scripts\python -m emporio.setup                         # paste the access code (option A)
 .venv\Scripts\python -m emporio.web                           # opens the chat in your browser
 ```
+- **No git?** On the GitHub page, click **Code → Download ZIP**, extract it, open a terminal
+  in the extracted folder, and start from `python -m venv .venv`.
 - **`emporio.setup`** saves the code to `.env`; your typing is hidden. For option B, use
   `emporio.setup --api-key`.
 - **Terminal chat instead of the browser:** `.venv\Scripts\python -m emporio` (add `--debug` to
@@ -224,8 +228,12 @@ Full safeguards table: [technical details](docs/technical-details.md#3-security-
 - A local model (e.g. via Ollama) as a zero-cost option; retrieval if the manual grows.
 
 ## 8. How I used AI (Claude Code)
-I worked with **Claude Code** (Anthropic's coding assistant) under a written working agreement,
-[`CLAUDE.md`](CLAUDE.md): understand → research → plan → build → test → document.
+About 1.5 hours after the case arrived, before opening any tool, I wrote my process plan in
+Notion. Its core principle became the architecture: **the LLM interprets the customer's intent,
+deterministic code retrieves the facts, and the policies govern what the agent may promise.**
+
+I then worked with **Claude Code** (Anthropic's coding assistant) under a written working
+agreement, [`CLAUDE.md`](CLAUDE.md): understand → research → plan → build → test → document.
 - **I made every product and technical decision.** Claude Code researched options, proposed
   plans, wrote the code and ran the tests.
 - **Approved plans** are kept in [`docs/`](docs/).

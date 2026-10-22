@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Source of docs/img/timeline.png. Render with headless Chrome:
-     chrome --headless=new --hide-scrollbars --window-size=900,815 --screenshot=timeline.png timeline.html
-     Times are the commit times in the repository's history (Brasília time). -->
+     chrome --headless=new --hide-scrollbars --window-size=900,905 --screenshot=timeline.png timeline.html
+     Times are Brasília time: the e-mail's timestamp, Rael's Notion notes, then commit times. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -34,8 +34,10 @@
   <span><i class="eval-dot"></i>Test &amp; fix</span><span><i class="ship-dot"></i>Deploy, review &amp; deliver</span>
 </div>
 <div class="line">
-  <div class="item"><div class="when"><b>Tue 20/10</b></div><div class="dot ship-dot"></div>
+  <div class="item"><div class="when"><b>Tue 20/10</b>17:04</div><div class="dot ship-dot"></div>
     <div class="card ship"><h3>Case received</h3>Deadline: Thu 22/10, 23:59. Submission: public repo + PDF.</div></div>
+  <div class="item"><div class="when">~18:30</div><div class="dot plan-dot"></div>
+    <div class="card plan"><h3>Rael's process plan (Notion, before any code)</h3>Clarify first: constraints, edge cases, security, UX, policy compliance, efficiency. Core principle: <i>the LLM interprets intent, deterministic code retrieves facts, the policies govern what the agent may promise.</i> Then Claude Code in plan mode, with no commits without review.</div></div>
   <div class="item"><div class="when"><b>Wed 21/10</b>until 12:09</div><div class="dot plan-dot"></div>
     <div class="card plan"><span class="d">D1–D4</span><h3>Understand</h3>Read the briefing, the manual and 6 CSVs; listed every contradiction; wrote the CLAUDE.md working agreement (approval-gated).</div></div>
   <div class="item"><div class="when">12:09–15:41</div><div class="dot plan-dot"></div>
