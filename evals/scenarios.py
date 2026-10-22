@@ -53,6 +53,9 @@ SCENARIOS = [
     {"id": "parcelamento",
      "messages": ["Consigo parcelar o Kala KA-C Concert Mogno em 6 vezes sem juros?"],
      "contains": ["4x"]},  # R$ 349,90: 4x of R$ 87,48 is the maximum (§3.1)
+    # Basses 135 and 137 are named in English ("Electric Bass") (decision D31)
+    {"id": "baixo_eletrico", "messages": ["Quais baixos elétricos vocês têm?"],
+     "contains": ["7.157,00", "8.732,00", "11.445,00"]},
     {"id": "regras_de_parcelamento",
      "messages": ["Quais formas de pagamento vocês aceitam e como funciona o parcelamento?"],
      "contains": ["50,00", "80,00", "100,00"]},  # §3.1 tiers prevail over the §3 table

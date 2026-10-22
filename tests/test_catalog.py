@@ -87,6 +87,17 @@ def test_term_search_tolerates_case_punctuation_and_typos(catalog, term):
     assert ids(catalog.search(term=term)) == [95]
 
 
+@pytest.mark.parametrize("term", ["baixo elétrico", "contrabaixo", "contrabaixos elétricos"])
+def test_portuguese_terms_find_basses_named_in_english(catalog, term):
+    # 135 and 137 are named "... Electric Bass"; their (withheld) descriptions were the only
+    # Portuguese text, so without synonyms only 138 was found
+    assert ids(catalog.search(term=term)) == [138, 135, 137]
+
+
+def test_electric_guitar_search_is_unchanged(catalog):
+    assert sorted(ids(catalog.search(term="guitarra elétrica"))) == [131, 132, 133, 134, 145]
+
+
 def test_filters_by_string_type_and_electronics(catalog):
     result = catalog.search(category="Violões", strings="nylon", electric=True)
     assert ids(result) == [101, 99, 111, 115, 100, 98, 102]

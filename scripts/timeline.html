@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- Source of docs/img/timeline.png. Render with headless Chrome:
+     chrome --headless=new --hide-scrollbars --window-size=900,815 --screenshot=timeline.png timeline.html
+     Times are the commit times in the repository's history (Brasília time). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 22px 28px; font-family: "Segoe UI", Arial, sans-serif; background: #fff; color: #1d2733; width: 844px; }
+  h1 { font-size: 21px; margin: 0 0 2px; }
+  .sub { font-size: 13px; color: #5b6673; margin-bottom: 14px; }
+  .legend span { display: inline-block; margin-right: 14px; font-size: 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .line { position: relative; margin-top: 12px; }
+  .line:before { content: ""; position: absolute; left: 118px; top: 6px; bottom: 6px; width: 3px; background: #d5dbe1; }
+  .item { position: relative; display: flex; margin: 0 0 9px; }
+  .when { width: 104px; text-align: right; padding-right: 26px; font-size: 12.5px; color: #5b6673; line-height: 1.3; padding-top: 6px; }
+  .when b { color: #1d2733; display: block; font-size: 13px; }
+  .dot { position: absolute; left: 112px; top: 9px; width: 15px; height: 15px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px #c9d0d7; }
+  .card { flex: 1; border-radius: 8px; padding: 7px 12px; font-size: 13px; line-height: 1.38; border-left: 4px solid; }
+  .card h3 { margin: 0 0 2px; font-size: 14px; }
+  .card .d { float: right; font-size: 11.5px; font-weight: 600; opacity: .75; }
+  .plan  { background: #eef4fc; border-color: #2f6fb7; } .plan-dot  { background: #2f6fb7; }
+  .build { background: #edf7f0; border-color: #2f8a4c; } .build-dot { background: #2f8a4c; }
+  .eval  { background: #fdf3e7; border-color: #d17a12; } .eval-dot  { background: #d17a12; }
+  .ship  { background: #f3eefb; border-color: #7a4cc2; } .ship-dot  { background: #7a4cc2; }
+</style>
+</head>
+<body>
+<h1>Process timeline: Empório da Música agent</h1>
+<div class="sub">Rael decided; Claude Code researched, built and tested. Each stage ended with a report, and the D-numbers are entries in docs/decision-log.md.</div>
+<div class="legend">
+  <span><i class="plan-dot"></i>Understand &amp; plan</span><span><i class="build-dot"></i>Build</span>
+  <span><i class="eval-dot"></i>Test &amp; fix</span><span><i class="ship-dot"></i>Deploy, review &amp; deliver</span>
+</div>
+<div class="line">
+  <div class="item"><div class="when"><b>Tue 20/10</b></div><div class="dot ship-dot"></div>
+    <div class="card ship"><h3>Case received</h3>Deadline: Thu 22/10, 23:59. Submission: public repo + PDF.</div></div>
+  <div class="item"><div class="when"><b>Wed 21/10</b>until 12:09</div><div class="dot plan-dot"></div>
+    <div class="card plan"><span class="d">D1–D4</span><h3>Understand</h3>Read the briefing, the manual and 6 CSVs; listed every contradiction; wrote the CLAUDE.md working agreement (approval-gated).</div></div>
+  <div class="item"><div class="when">12:09–15:41</div><div class="dot plan-dot"></div>
+    <div class="card plan"><span class="d">D5–D17</span><h3>Research &amp; plan</h3>Function calling over Python tools, manual in a cached prompt, CLI. Model research: Claude Haiku 5.5. US$5 budget and the hosted-proxy design.</div></div>
+  <div class="item"><div class="when">15:41–16:52</div><div class="dot build-dot"></div>
+    <div class="card build"><span class="d">D18–D19</span><h3>Build the agent</h3>Data layer and pricing rules (52 tests), verified manual transcription, tools, prompt, tool loop, CLI. First live run: the 4 briefing questions correct, US$0.004.</div></div>
+  <div class="item"><div class="when">16:57</div><div class="dot build-dot"></div>
+    <div class="card build"><span class="d">D14–D15</span><h3>Hosted proxy</h3>FastAPI proxy holds the API key; access code, model pinning, rate and budget limits.</div></div>
+  <div class="item"><div class="when">17:03–17:24</div><div class="dot eval-dot"></div>
+    <div class="card eval"><span class="d">D20–D22</span><h3>Evaluate &amp; fix</h3>21 scripted scenarios against the real model. Fixed what they and the example review exposed; 5 real example conversations.</div></div>
+  <div class="item"><div class="when">18:05</div><div class="dot ship-dot"></div>
+    <div class="card ship"><span class="d">D23–D24</span><h3>Deploy</h3>Proxy live on Render. Language rule revised to pt-BR by default; Haiku kept, no Sonnet run.</div></div>
+  <div class="item"><div class="when">19:34–19:43</div><div class="dot eval-dot"></div>
+    <div class="card eval"><span class="d">D25–D27</span><h3>Rael's manual tests</h3>Feedback applied (WhatsApp number, --mode flag). Local WhatsApp-style web chat with a behind-the-scenes tab.</div></div>
+  <div class="item"><div class="when"><b>Thu 22/10</b>00:44</div><div class="dot ship-dot"></div>
+    <div class="card ship"><span class="d">D28–D29</span><h3>v1.0.0</h3>A single customer-service contact, one-command setup, tech-stack table.</div></div>
+  <div class="item"><div class="when">10:54 →</div><div class="dot ship-dot"></div>
+    <div class="card ship"><span class="d">D30–D31</span><h3>Final review → v1.0.1 → submission</h3>Lean README = PDF, deliverables map, this timeline, Portuguese search fix for English product names.</div></div>
+</div>
+</body>
+</html>

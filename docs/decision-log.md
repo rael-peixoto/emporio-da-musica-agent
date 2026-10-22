@@ -39,6 +39,8 @@ it.
 | [D27](#d27) | 2026-10-21 | Real WhatsApp integration documented, not built | Rael |
 | [D28](#d28) | 2026-10-22 | Only the §7 WhatsApp as a contact channel (supersedes D25) | Rael |
 | [D29](#d29) | 2026-10-22 | Promotion names as seasonal hints: noted, not used | Rael |
+| [D30](#d30) | 2026-10-22 | A lean README that is also the PDF | Rael |
+| [D31](#d31) | 2026-10-22 | Portuguese search terms match English product names; descriptions stay withheld | Rael (evidence checked by Claude Code) |
 
 ---
 
@@ -211,7 +213,7 @@ it.
 - **Context:** the CSVs and the manual contradict themselves in several places.
 - **Decision:**
   - Every contradiction gets one written rule, implemented in code or in the prompt.
-  - The full list is in the README's [Assumptions](../README.md#7-assumptions) section.
+  - The full list is in the README's [Assumptions](../README.md#4-assumptions) section.
   - The guiding principle: where a rule is ambiguous, read it in the customer's favour, as
     Brazil's Consumer Protection Code requires (CDC, art. 47).
 - **Trade-offs:** some calls (for example, which phone number to give customers) can't be
@@ -490,3 +492,45 @@ it.
   Especial", "Queima de Estoque"), the data has no dates, and recurrence is unconfirmed. Listed
   as future work in the README.
 - **Decided by:** Rael.
+
+<a id="d30"></a>
+### D30 · A lean README that is also the PDF
+- **Context:** at the final review the README had grown to 555 lines, and the PDF to 36 pages
+  (README, decision log and examples). Reviewers have little time; the process discussion
+  belongs in the interviews.
+- **Decision:**
+  - The README opens with a **deliverables table** that maps every item the briefing and the
+    e-mail ask for to where it is. It then keeps the essentials: quick start with
+    screenshots, how it works, the tech stack, assumptions, testing, security, limitations,
+    AI usage with a visual timeline, and a repository map.
+  - The detail moved, unchanged in substance, to `docs/technical-details.md`.
+  - **The PDF is now the README itself**, plus one private first page with the access code
+    (built locally, never committed).
+  - How reviewers run the agent didn't change.
+- **Trade-offs:** detail is one click away instead of inline. In return, the essentials can be
+  read in minutes.
+- **Decided by:** Rael.
+
+<a id="d31"></a>
+### D31 · Portuguese search terms match English product names; descriptions stay withheld
+- **Context:** Rael questioned whether the 7 withheld descriptions were really wrong, and
+  pointed out the risk behind it: a customer asking for an "elétrico" item and hearing "we
+  don't have one".
+- **Evidence:** the descriptions contradict the product's *own* data, no instrument knowledge
+  needed. For example:
+  - 137 "Yamaha", specs 4 strings, is described as an "Ibanez… de 5 cordas";
+  - 142 "Korg", 61 keys, as a "Roland com 88 teclas";
+  - 139 and 140 have Maple shells but are described in Poplar and Birch, under other brands.
+
+  The risk Rael raised was real, though: "baixo elétrico" and "contrabaixo" found only **1 of
+  the 3** available basses. The other two are named in English ("Electric Bass"), and their
+  Portuguese descriptions were the withheld ones.
+- **Decision:**
+  - Keep the descriptions withheld.
+  - Search maps Portuguese words to English ones ("baixo"/"contrabaixo" → "bass",
+    "elétrico/a" → "electric"), matching whole words only. A first version matched the
+    "Basswood" body of a guitar; the unit test caught it.
+  - New tests and a `baixo_eletrico` scenario.
+- **Trade-offs:** a small, hand-made word list, not general translation. Enough for this
+  catalogue.
+- **Decided by:** Rael (evidence checked by Claude Code).

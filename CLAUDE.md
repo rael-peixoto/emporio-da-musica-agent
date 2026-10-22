@@ -160,9 +160,9 @@ before credits run low.
 Submission goes through two channels (the briefing and the recruiter e-mail differ, so we do
 both): the public GitHub repo link, and a PDF uploaded to the recruiter's form.
 - [ ] Public GitHub repo with incremental history.
-- [ ] Submission PDF (≤ 100 MB) generated from the README and documentation (assumption: README
-      + decision log + example conversations, plus a private "Reviewer access" page with the
-      proxy access code taken from a build argument). The PDF is never committed. Named
+- [ ] Submission PDF (≤ 100 MB) generated from the README and documentation (D30: the PDF is the
+      README itself, plus a private "Reviewer access" first page with the proxy access code
+      read from `.env`). Keep the README lean; detail goes to `docs/technical-details.md`. The PDF is never committed. Named
       `Rael Marchant Peixoto - AI Engineer – Full-Stack para Aplicações com IA Generativa.pdf`.
 - [ ] README: setup & run (env, provider, commands); technical justifications (framework, LLM,
       retrieval, prompts); assumptions; known limitations and what we'd do with more time;

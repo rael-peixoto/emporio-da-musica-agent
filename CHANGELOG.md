@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.1] - 2026-10-22
+
+### Changed
+- README rewritten for reviewers (D30):
+  - It opens with a deliverables table, then the essentials.
+  - Detail moved to `docs/technical-details.md`.
+  - The PDF is now the README plus the private access page (about 36 → 12 pages).
+- Quick start says where the access code is: the first page of the PDF sent through the Google
+  Form.
+- The "Assumptions" entry on withheld descriptions now shows the evidence from the data itself.
+
+### Added
+- Visual process timeline (`docs/img/timeline.png`, source `scripts/timeline.html`), built
+  from the real commit times.
+- Search: Portuguese words match English product names, whole words only, so "baixo elétrico"
+  now finds all 3 basses (D31). New unit tests and the `baixo_eletrico` scenario: 138 tests,
+  24/24 scenarios.
+
 ## [1.0.0] - 2026-10-22
 
 First complete release, delivered for the Artefact AI Engineer case. Entries are grouped by

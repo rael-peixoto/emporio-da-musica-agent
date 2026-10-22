@@ -29,6 +29,13 @@ INCONSISTENT_DESCRIPTIONS = frozenset({135, 136, 137, 139, 140, 142, 144})
 
 STRING_TYPES = {"nylon": "nylon", "aco": "steel", "steel": "steel"}
 
+# Some product names are in English ("Music Man Bass 1X Electric Bass") while customers write in
+# Portuguese, so a query word also matches its English form (accent-free, as normalize() leaves it).
+SEARCH_SYNONYMS = {
+    "baixo": "bass", "baixos": "bass", "contrabaixo": "bass", "contrabaixos": "bass",
+    "eletrico": "electric", "eletrica": "electric", "eletricos": "electric", "eletricas": "electric",
+}
+
 MIN_PHONE_DIGITS = 8
 
 
@@ -276,7 +283,8 @@ def _matches(term: str, product: Product, fuzzy: bool) -> bool:
     words = _words(text)
     squashed = "".join(words)  # lets "GD-20" match "GD20"
     for token in _words(term):
-        if token in squashed:
+        # Synonyms match whole words only: "bass" must not match a "Basswood" body
+        if token in squashed or SEARCH_SYNONYMS.get(token) in words:
             continue
         if fuzzy and difflib.get_close_matches(token, words, n=1, cutoff=0.8):
             continue

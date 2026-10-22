@@ -1,4 +1,4 @@
-"""Build the submission PDF from the README, the decision log and the example conversations.
+"""Build the submission PDF: the README itself, plus an optional private access page.
 
 Usage:
     python scripts/build_pdf.py [--with-access-code] [--chrome PATH]
@@ -130,12 +130,10 @@ def main() -> int:
     parser.add_argument("--chrome")
     args = parser.parse_args()
 
+    # The PDF is the README itself (decision D30); only the private access page is unique to it
     parts = [to_html(ROOT / "README.md")]
     if args.with_access_code:
         parts.insert(0, access_page())
-    parts.append(to_html(ROOT / "docs" / "decision-log.md"))
-    for example in sorted((ROOT / "examples").glob("*.md")):
-        parts.append(f"<p><em>Example conversation: {example.name}</em></p>" + to_html(example))
     body = "\n".join(f'<section class="{"part" if i else ""}">{p}</section>'
                      for i, p in enumerate(parts))
     page = (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
