@@ -3,9 +3,21 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.0.0] - 2026-10-22
+
+First complete release, delivered for the Artefact AI Engineer case. Entries are grouped by
+type; the commit history shows the step-by-step order.
 
 ### Added
+- `python -m emporio.setup`: saves the access code (hidden input) or your own API key to
+  `.env`, so reviewers never edit files by hand. The private PDF page shows the ready-to-paste
+  command.
+- README "Tech stack at a glance" table: each technology, what it does, and why it was chosen
+  over the alternatives.
+- Screenshot of a harder conversation (gift recommendation and a promotion question).
+- Evaluation scenario `contatos`; the suite is 23/23 (US$0.0106). 134 unit tests.
+- Decision log D28 and D29, plus an observation added to D11 (follow-ups use the session
+  memory).
 - Local web chat (`python -m emporio.web`, D26):
   - A WhatsApp-style chat tab with suggestion chips.
   - A "behind the scenes" console tab with tool calls, data, tokens and cost.
@@ -39,6 +51,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   5.5 (US$0.0110).
 
 ### Changed
+- Contacts (D28): the agent gives only WhatsApp (67) 3321-4500. The other number and the
+  e-mail are masked in the model's copy of the manual, and so is the §3 table's "parcela mínima
+  de R$ 100,00" (the §3.1 tiers prevail). Example 2 was regenerated.
 - WhatsApp number (D25): the agent gives WhatsApp (67) 3321-4500 (§7) and phone
   (67) 3341-4444; the conflict is flagged in the README.
 - The session cost line is shown only with `--debug`.

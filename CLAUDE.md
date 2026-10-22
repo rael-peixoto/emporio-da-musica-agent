@@ -93,8 +93,9 @@ order_items 22 · customers 50. File names contain spaces and accents: use UTF-8
 `pathlib`, and test on Windows.
 
 Each issue below needs an explicit handling decision, documented in the README:
-- Phone `(67) 3341-4444` (cover, §1.2) vs WhatsApp `(67) 3321-4500` (§7). Decided (D25):
-  WhatsApp 3321-4500, phone 3341-4444.
+- Phone `(67) 3341-4444` (cover, §1.2) vs WhatsApp `(67) 3321-4500` (§7). Decided (D28): only
+  WhatsApp 3321-4500 is given; the other number and the e-mail are masked in the model's copy
+  of the manual (`prompt.MANUAL_EDITS`).
 - E-mail `contato@emporiodamusica.com.br` (cover) vs `contato@empóriodamusica.com.br` (§1.2).
 - Installments: the table says min R$ 100/parcel; §3.1 says ≤3x no minimum "except below
   R$ 50" (ambiguous), 4–6x R$ 80, 7–12x R$ 100.
@@ -189,6 +190,7 @@ py -3.14 -m venv .venv
 .venv\Scripts\python -m emporio --help        # chat: [--now ISO] [--debug] [--save PATH]
 .venv\Scripts\python -m pytest                # unit tests, no LLM calls
 .venv\Scripts\python -m emporio.web           # local WhatsApp-style web chat (+ console tab)
+.venv\Scripts\python -m emporio.setup         # writes the access code/API key to .env (don't run on the user's .env)
 ```
 Scripted live runs: write the customer lines (ending with `sair`) to a UTF-8 file and pipe it
 in: `.venv/Scripts/python.exe -m emporio --debug < input.txt` (Bash). `--debug` prints the

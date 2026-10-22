@@ -6,8 +6,7 @@ products, prices, stock, promotions and orders in the store's data, and it answe
 store-policy questions (opening hours, payment, returns, shipping, warranty) from the store's
 policy manual. Built in Python for the Artefact AI Engineer technical case.
 
-> **Status: in development.** Sections marked _(planned)_ describe approved designs that are not
-> implemented yet. The README is updated at every stage. See the
+> **Status: complete (v1.0.0, 2026-10-22).** Every stage below is done; see the
 > [progress table](#progress) and the [changelog](CHANGELOG.md).
 
 ## Contents
@@ -36,7 +35,7 @@ policy manual. Built in Python for the Artefact AI Engineer technical case.
 | Scenario evaluations | Done: 22/22 on Claude Haiku 5.5 |
 | Example conversations | Done (5 real transcripts) |
 | Local web chat (WhatsApp-style, plus a behind-the-scenes console) | Done |
-| Final documentation and submission PDF | Planned |
+| Final documentation and submission PDF | Done |
 
 ## 1. Overview
 What the agent does:
@@ -73,10 +72,16 @@ cd emporio-da-musica-agent
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt     # Windows
 # .venv/bin/python -m pip install -r requirements.txt       # macOS / Linux
-copy .env.example .env                                        # macOS / Linux: cp
+.venv\Scripts\python -m emporio.setup                         # paste the access code (option A)
 ```
-Edit `.env` and fill in **either** `EMPORIO_ACCESS_CODE` (option A) **or** `ANTHROPIC_API_KEY`
-(option B), then start the chat:
+`emporio.setup` asks for the access code (your typing is hidden) and saves it to `.env`; nobody
+has to edit files by hand.
+- To save it in one line: `.venv\Scripts\python -m emporio.setup --access-code <code>`.
+- Option B: `.venv\Scripts\python -m emporio.setup --api-key` asks for your own Anthropic key
+  instead.
+
+Then start the web chat (`.venv\Scripts\python -m emporio.web`, see below) or the terminal
+chat:
 ```
 .venv\Scripts\python -m emporio                   # chat in the terminal; type "sair" to quit
 .venv\Scripts\python -m emporio --mode proxy      # force the hosted proxy (needs the access code)
@@ -105,6 +110,14 @@ stop it.
 
 ![Behind-the-scenes console tab](docs/img/web-console.png)
 
+A harder conversation:
+- A gift idea for a Led Zeppelin fan: nothing in the catalogue mentions the band, so the agent
+  says so honestly and suggests the Les Paul, the guitar associated with Jimmy Page.
+- "When will the Crafter HT-100 go on sale?": it already is, so the agent quotes the active
+  18% discount from the data.
+
+![Recommendation and promotion questions](docs/img/web-chat-recommendation.png)
+
 **Cost:** about US$0.001–0.002 per customer message on Claude Haiku 5.5. In a measured run,
 the 8,246-token cached prompt was written once and then read from cache on every later call.
 
@@ -123,7 +136,8 @@ e-mails below come from the case's fictional data in `data/`.
 | `Vocês têm o Giannini GF-3D Dreadnought Sunburst?` | Temporarily unavailable, plus similar alternatives |
 | `Tem o contrabaixo Precision de 4 cordas?` | Not found, plus the available basses as alternatives (see [Assumptions](#7-assumptions), item 2) |
 | `Vocês vendem cordas e palhetas?` | Politely declined: instruments only |
-| `Qual o WhatsApp de vocês? E o telefone?` | WhatsApp (67) 3321-4500; phone (67) 3341-4444 (see [Assumptions](#7-assumptions), item 5) |
+| `Qual o telefone, o WhatsApp e o e-mail de vocês?` | Only WhatsApp (67) 3321-4500, the customer-service channel; no other phone or e-mail (see [Assumptions](#7-assumptions), item 5) |
+| `Quais violões até R$ 1000?`, then `E o Fender Stratocaster?` | The follow-up is understood from context: the conversation is remembered within the session |
 | `Qual o horário de vocês? Entregam em Dourados?` | Hours; shipping options and delivery times, with no invented freight price |
 | `Qual o status do pedido 8?`, then `anacarol.ferreira@coldmail.com` | Asks for verification first; then shipped, tracking code, and an apology for the late delivery |
 | `Qual o status do pedido 10?`, then `lucas.mendes@jmail.com` | Not found: that isn't the customer's e-mail, and nothing is revealed |
@@ -143,6 +157,9 @@ CLI ─► agent ──┤            (your own key)
  (local tools, └─ proxy:   Anthropic SDK, base_url=Render URL ─► FastAPI proxy ─► api.anthropic.com
   local data)              api_key = access code                (key kept server-side)
 ```
+- **Memory within a conversation:** the agent keeps the whole session's history, so
+  follow-ups like "E o Fender Stratocaster?" are understood from context. Nothing is kept
+  after the session ends ([D11](docs/decision-log.md#d11)).
 - **Agent loop** (`emporio/agent.py`): Claude decides whether to answer directly or call a
   tool. Tools run locally in Python over the CSV files and return exact, pre-formatted values
   (e.g. `"R$ 2.199,00"`), so the model never does arithmetic.
@@ -168,6 +185,25 @@ CLI ─► agent ──┤            (your own key)
   answered in that language ([decision D23](docs/decision-log.md#d23)).
 
 ## 4. Technical decisions
+### Tech stack at a glance
+| Technology | What it does here | Why it was chosen over the alternatives |
+|---|---|---|
+| **Python 3.14** (3.11+ supported) | The whole project | Required by the briefing |
+| **Claude Haiku 5.5** (Anthropic API) | The language model: understands the customer, decides which tool to call, writes the reply | Cheapest current Claude model (US$0.10 / US$0.50 per 1M tokens) and passed every scenario. GPT-4o-mini costs more and is being retired; Claude 3 Haiku is retired; local Llama 3 8B has no tool calling and too small a context window ([D9](docs/decision-log.md#d9), [D20](docs/decision-log.md#d20)) |
+| **Anthropic Python SDK 2.0**, with a hand-written tool loop | Calls the model, runs the tools it asks for, keeps the conversation history | About 40 readable lines. LangChain, LlamaIndex or the SDK's beta tool runner would hide the logic and add dependencies ([D10](docs/decision-log.md#d10)) |
+| **Function calling** (5 Python tools over the CSVs) | Looks up products, prices, promotions and orders, and does all the maths | Exact numbers, and customer data only behind a verified lookup. RAG over CSV rows is poor at numeric filters; text-to-SQL could reach personal data ([D5](docs/decision-log.md#d5)) |
+| **Policy manual in a cached system prompt** | The model always sees the whole 8-page manual | No retrieval misses, and caching makes repeated reads cost a tenth. Embedding RAG is overkill at 8 pages ([D6](docs/decision-log.md#d6)) |
+| **Python standard library**: `csv`, `Decimal`, `zoneinfo` (+ `tzdata`) | Loads the data, does exact money maths, works in Campo Grande time | 65 products don't need pandas; `Decimal` avoids rounding errors in prices |
+| **Markdown transcription + `pypdf` fidelity test** | The manual as text for the prompt, proven to match the PDF | Readable tables for the model; a test catches any transcription typo |
+| **FastAPI + uvicorn** | The hosted proxy and the local web chat | Small, standard, and one framework for both ([D14](docs/decision-log.md#d14), [D26](docs/decision-log.md#d26)) |
+| **Render** (free plan, `render.yaml`) | Hosts the proxy that keeps the API key server-side | Free and deploys from GitHub. Sharing a key or hosting a public UI would be riskier. Trade-off: about 50 s cold start ([D14](docs/decision-log.md#d14)) |
+| **Plain HTML/CSS/JavaScript** (one file) | The WhatsApp-style page and its console tab | No build step, CDN or extra Python package. Streamlit would add dependencies and limit styling ([D26](docs/decision-log.md#d26)) |
+| **python-dotenv** + `emporio.setup` | Reads and writes the `.env` settings | Secrets stay out of the code and out of git |
+| **pytest** + a custom scenario evaluation | Free unit tests, plus behaviour tests against the real model | The model choice was decided by measured results, not assumptions ([D20](docs/decision-log.md#d20)) |
+| **GitHub** (push protection, secret scanning) | Public repository with an incremental history | Required by the briefing; blocks any push that contains an Anthropic key |
+| **python-markdown + headless Chrome** | Builds the submission PDF from these documents | The PDF can't drift from the repository; no extra tools needed |
+
+### Decision summary
 Every decision, with the options considered and the trade-offs, is in the
 **[decision log](docs/decision-log.md)**. Summary:
 
@@ -268,12 +304,15 @@ customer's favour (Brazil's Consumer Protection Code, CDC art. 47).
    R$ 100.
 5. **Contact details:** the manual contradicts itself on the WhatsApp number.
    - The cover and the company table (§1.2) list **(67) 3341-4444** as "Telefone / WhatsApp".
-   - §7 says WhatsApp **(67) 3321-4500** is "o principal meio de atendimento remoto".
-   - Decision ([D25](docs/decision-log.md#d25)): the agent gives **WhatsApp (67) 3321-4500**
-     (the section dedicated to WhatsApp service) and **phone (67) 3341-4444**.
-   - The e-mail is **contato@emporiodamusica.com.br**; one table spells it with an accent
-     ("empório"), which looks like a typo.
-   - The store should confirm both before going live.
+   - §7, the section about WhatsApp service, says **(67) 3321-4500** is "o principal meio de
+     atendimento remoto".
+   - The two numbers are too different to be a typo. The assumption is that 3341-4444 is a
+     business line for other purposes, not customer service.
+   - Decision ([D28](docs/decision-log.md#d28)): the agent gives **only WhatsApp
+     (67) 3321-4500**. It gives no other phone number and no e-mail, since the e-mail may not
+     be a customer-service channel either; one table even spells it differently.
+   - Those contacts are masked in the model's copy of the manual, so it can't quote them.
+   - The store should confirm before going live.
 6. **Shipping:** an order of exactly R$ 500 ships free. The manual says free "above R$ 500" and
    charges a fee "below R$ 500", leaving R$ 500 itself undefined. Freight outside the Campo
    Grande area depends on the postcode and isn't quoted.
@@ -344,6 +383,12 @@ customer's favour (Brazil's Consumer Protection Code, CDC art. 47).
 - Try a local model (e.g. Qwen3 8B via Ollama, which accepts the same API format) as a
   zero-cost option.
 - Switch to retrieval for the policies if the manual grows well beyond its current 8 pages.
+- **Use promotion history as seasonal hints.** Several products had past promotions with
+  calendar names: Black Friday, Promoção de Páscoa, Aniversário da Loja, Semana do Músico. If
+  the store confirms these campaigns recur every year, the agent could answer "quando o item X
+  entra em promoção?" with "it was in last year's Black Friday", which might save a sale. Not
+  done, because some promotions aren't seasonal ("Desconto Exclusivo", "Oferta Especial") and
+  the data has no dates ([D29](docs/decision-log.md#d29)).
 
 ## 9. Testing & evaluation
 **In plain words**, there are two kinds of automated checks:
@@ -361,7 +406,7 @@ customer's favour (Brazil's Consumer Protection Code, CDC art. 47).
   and writes a readable report, with every conversation, to
   `evals/results/claude-haiku-5-5.md`.
 
-**Unit tests:** 121 tests, no model calls, run with `.venv\Scripts\python -m pytest`. Expected
+**Unit tests:** 134 tests, no model calls, run with `.venv\Scripts\python -m pytest`. Expected
 values were worked out by hand from the CSV files and the manual, never copied from the code's
 output. They cover:
 - **Data and pricing:** data loading and sellability rules; search filters (including the
@@ -375,7 +420,7 @@ output. They cover:
 - **Proxy** (with a fake upstream): access code, server-side overrides, size and rate limits,
   daily budget, hidden upstream errors, logs without message content.
 
-**Scenario evaluations** (`python -m evals.run`): 22 scripted conversations run against the
+**Scenario evaluations** (`python -m evals.run`): 23 scripted conversations run against the
 real model, with automatic checks for:
 - required values (e.g. `R$ 2.199,00`, `24/02/2026`);
 - forbidden values (another customer's data, a discount that must not be offered);
@@ -384,7 +429,7 @@ real model, with automatic checks for:
 
 | Model | Result | Cost of the full run | Report |
 |---|---|---|---|
-| Claude Haiku 5.5 (effort `low`) | **22/22 passed** | US$0.0107 | [`evals/results/claude-haiku-5-5.md`](evals/results/claude-haiku-5-5.md) (with every transcript) |
+| Claude Haiku 5.5 (effort `low`) | **23/23 passed** | US$0.0106 | [`evals/results/claude-haiku-5-5.md`](evals/results/claude-haiku-5-5.md) (with every transcript) |
 
 Scenarios:
 - **The briefing's four questions:** the catalogue up to R$ 1,000, the store address, the
@@ -395,8 +440,8 @@ Scenarios:
 - **Scope:** accessories and off-topic requests.
 - **Privacy:** an order without verification, someone else's order, a prompt-injection
   attempt to list customers.
-- **Service flows:** a complaint handed to a human, a Sunday message (after hours), and an
-  English question.
+- **Service flows:** a complaint handed to a human, a Sunday message (after hours), an English
+  question, and contact details (only the customer-service WhatsApp).
 
 Every transcript was also read by hand, and the prices and dates checked against the data.
 
@@ -450,11 +495,17 @@ only changes replies to non-Portuguese messages; all five conversations are in P
 - **Research & plan:** in Claude Code's plan mode (where it can only read and propose, not
   change files), it researched options and checked prices and model retirements on official
   pages. Rael chose the options; the approved plans are in
-  [`docs/implementation-plan.md`](docs/implementation-plan.md) and
-  [`docs/implementation-plan-amendment-proxy.md`](docs/implementation-plan-amendment-proxy.md).
+  [`docs/implementation-plan.md`](docs/implementation-plan.md),
+  [`docs/implementation-plan-amendment-proxy.md`](docs/implementation-plan-amendment-proxy.md)
+  and [`docs/implementation-plan-web-ui.md`](docs/implementation-plan-web-ui.md).
 - **Execute & test:** one stage at a time. After each stage, Claude Code reports the changes,
-  the real test output and the open issues, and suggests a commit. **Rael approves every
-  commit.**
+  the real test output and the open issues.
+  - Rael approved the first commits one by one, then granted standing permission for stage
+    commits ([D18](docs/decision-log.md#d18)).
+  - Every commit is gated on passing tests and an automatic scan for real secrets.
+- **Manual testing by Rael** fed back into the design: the WhatsApp number (D25, D28), the
+  language rule (D23), the web chat (D26), and observations like the seasonal-promotion idea
+  (D29).
 - **Document:** decisions are recorded in the [decision log](docs/decision-log.md) as they are
   made, with who decided.
 

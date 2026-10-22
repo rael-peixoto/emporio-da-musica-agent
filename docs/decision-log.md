@@ -37,6 +37,8 @@ it.
 | [D25](#d25) | 2026-10-21 | WhatsApp number from §7 (revises D12, item 5) | Rael |
 | [D26](#d26) | 2026-10-21 | Local WhatsApp-style web chat with a console tab (extends D7) | Rael |
 | [D27](#d27) | 2026-10-21 | Real WhatsApp integration documented, not built | Rael |
+| [D28](#d28) | 2026-10-22 | Only the §7 WhatsApp as a contact channel (supersedes D25) | Rael |
+| [D29](#d29) | 2026-10-22 | Promotion names as seasonal hints: noted, not used | Rael |
 
 ---
 
@@ -200,6 +202,9 @@ it.
   login, so persisting conversations would mix people's data. Not persisting follows the
   data-minimisation principle of Brazil's data-protection law (LGPD).
 - **Decided by:** Rael (proposed by Claude Code).
+- **Observed in testing (2026-10-22, Rael):** keeping the full history *within* a session was
+  the right call. A follow-up like "E o Fender Stratocaster?", after a question about violões,
+  is understood from context without the customer repeating themselves.
 
 <a id="d12"></a>
 ### D12 · Explicit handling for each data/policy inconsistency
@@ -410,6 +415,7 @@ it.
 
 <a id="d25"></a>
 ### D25 · WhatsApp number from §7 (revises D12, item 5)
+> **Superseded by [D28](#d28):** the agent no longer gives the phone number.
 - **Context:** the manual gives two WhatsApp numbers. The cover and the §1.2 table show
   "Telefone / WhatsApp (67) 3341-4444"; §7, the section about WhatsApp service, calls
   (67) 3321-4500 "o principal meio de atendimento remoto". The first plan gave customers
@@ -451,4 +457,36 @@ it.
   and phone numbers treated as personal data.
 - **Trade-offs:** no live WhatsApp demo. In exchange, no dependency on Meta or Twilio account
   approval before the deadline, and no need to register reviewers' phone numbers.
+- **Decided by:** Rael.
+
+<a id="d28"></a>
+### D28 · Only the §7 WhatsApp as a contact channel (supersedes D25)
+- **Context:** D25 gave customers both numbers. The web-chat screenshot showed how confusing
+  two numbers in one reply are. The manual's numbers (3341-4444 on the cover and in §1.2;
+  3321-4500 in §7) are too different to be a typo, and the case may be checking whether
+  candidates read the manual closely.
+- **Decision:** the bold, documented assumption is that 3341-4444 is a business line for
+  other purposes. The **only** customer-service channel the agent gives is **WhatsApp
+  (67) 3321-4500**, plus the shop address for in-person visits.
+  - It also gives **no e-mail**: the address may not be a service channel, and the manual
+    spells it two different ways.
+  - **Enforcement:** an instruction in the prompt, and masking of those contacts in the
+    model's copy of the manual. The same mechanism now replaces the §3 summary table's "parcela
+    mínima de R$ 100,00" with a pointer to the §3.1 tiers, after a run quoted the table.
+  - `knowledge/politicas.md` stays verbatim, so the fidelity test is unchanged.
+  - New tests: the prompt contains neither contact, and every masked string exists in the
+    transcription. New scenario `contatos`; the suite is now 23/23.
+- **Trade-offs:** if the assumption is wrong, customers lose a channel. The README flags it
+  for the store to confirm.
+- **Decided by:** Rael.
+
+<a id="d29"></a>
+### D29 · Promotion names as seasonal hints: noted, not used
+- **Observation (Rael):** inactive promotions carry calendar names: Black Friday, Promoção de
+  Páscoa, Aniversário da Loja, Semana do Músico, Liquidação de Inverno. If those campaigns
+  recur every year, the agent could answer "quando o item X entra em promoção?" with "it was
+  in last year's Black Friday" and perhaps save a sale.
+- **Decision:** not implemented. Some names aren't seasonal ("Desconto Exclusivo", "Oferta
+  Especial", "Queima de Estoque"), the data has no dates, and recurrence is unconfirmed. Listed
+  as future work in the README.
 - **Decided by:** Rael.

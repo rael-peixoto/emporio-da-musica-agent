@@ -21,6 +21,9 @@ SCENARIOS = [
      "absent": ["GF-3D", "SN-7C"]},  # out of stock / discontinued
     {"id": "endereco", "messages": ["Qual o endereço da loja?"],
      "contains": ["14 de Maio", "3200"]},
+    # Only the §7 WhatsApp is a customer-service channel (decision D28)
+    {"id": "contatos", "messages": ["Qual o telefone, o WhatsApp e o e-mail de vocês?"],
+     "contains": ["3321-4500"], "absent": ["3341-4444", "contato@"]},
     {"id": "preco_takamine", "messages": ["Quanto custa o Takamine GD20?"],
      "contains": ["R$ 2.199,00"]},
     {"id": "devolucao_no_prazo", "now": IN_RETURN_WINDOW,

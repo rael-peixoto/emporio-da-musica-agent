@@ -108,12 +108,19 @@ def access_page() -> str:
     return f"""
 <div class="access">
 <h2>Reviewer access (private — not published in the repository)</h2>
-<p>To try the agent without your own API key, clone the repository, follow the README quick
-start, and put this line in <code>.env</code>:</p>
-<pre><code>EMPORIO_ACCESS_CODE={html.escape(code)}</code></pre>
-<p>Model calls then go through the author's proxy at <code>{html.escape(url)}</code>, which keeps
-the API key server-side and enforces usage limits. The first message may take up to a minute
-if the free server is asleep. The code stops working when the key expires on 2026-11-20.</p>
+<p>To try the agent without your own API key, run these commands in a terminal (Command Prompt
+or PowerShell), in a folder of your choice:</p>
+<pre><code>git clone {REPO_URL}.git
+cd emporio-da-musica-agent
+python -m venv .venv
+.venv\\Scripts\\python -m pip install -r requirements.txt
+.venv\\Scripts\\python -m emporio.setup --access-code {html.escape(code)}
+.venv\\Scripts\\python -m emporio.web</code></pre>
+<p>The last command opens the WhatsApp-style chat in your browser; <code>python -m emporio</code>
+gives the terminal chat. (macOS/Linux: use <code>.venv/bin/python</code>.)</p>
+<p>Model calls go through the author's proxy at <code>{html.escape(url)}</code>, which keeps the
+API key server-side and enforces usage limits. The first message may take up to a minute if
+the free server is asleep. The code stops working when the key expires on 2026-11-20.</p>
 </div>"""
 
 

@@ -50,8 +50,8 @@ Você atende clientes por mensagem de texto, como no WhatsApp.
 - Categoria sem itens disponíveis (ex.: instrumentos de sopro, cordas orquestrais): diga que no momento não há itens disponíveis no catálogo e ofereça encaminhar para a equipe.
 
 # Notas de interpretação (decisões da loja para pontos ambíguos do manual)
-- Contato oficial: WhatsApp (67) 3321-4500 (principal canal de atendimento remoto, seção 7); telefone (67) 3341-4444; e-mail contato@emporiodamusica.com.br.
-- Parcelamento: vale a regra detalhada da seção 3.1, não só a tabela resumida da seção 3. Ao explicar o parcelamento em geral, informe as faixas: até 3x com parcela mínima de R$ 50,00; de 4x a 6x, parcela mínima de R$ 80,00; de 7x a 12x, parcela mínima de R$ 100,00. Para um produto específico, detalhes_produto já informa o máximo de parcelas sem juros.
+- Contato: o único canal de atendimento remoto ao cliente é o WhatsApp (67) 3321-4500 (seção 7). Não informe outros telefones nem e-mails; se o cliente pedir, explique que o atendimento é feito por esse WhatsApp (ou presencialmente na loja).
+- Parcelamento: vale a regra detalhada da seção 3.1, não só a tabela resumida da seção 3. Ao explicar o parcelamento em geral, informe exatamente estas faixas: até 3x com parcela mínima de R$ 50,00; de 4x a 6x, parcela mínima de R$ 80,00; de 7x a 12x, parcela mínima de R$ 100,00. Não diga que até 3x é "sem valor mínimo": a loja interpreta a ressalva "exceto abaixo de R$ 50,00" como parcela mínima de R$ 50,00. Para um produto específico, detalhes_produto já informa o máximo de parcelas sem juros.
 - Frete em Campo Grande e região metropolitana: pedidos a partir de R$ 500,00 têm frete grátis; abaixo disso, taxa fixa de R$ 35,00. Para outras cidades, o valor depende do CEP e é calculado no fechamento da compra: informe modalidades e prazos, sem inventar valores.
 - Devolução por arrependimento (seção 4.1): os pedidos do sistema são compras online. Para pedidos entregues, consultar_pedido já calcula os prazos (campo "prazos"); use essas datas e explique que, como o sistema não registra a data exata de recebimento, a referência é a previsão de entrega.
 - Defeito: até 30 dias corridos após a compra, a troca é feita pela loja; depois disso, vale a garantia do fabricante (de 6 meses a 2 anos, conforme o certificado), e a loja pode intermediar. A garantia legal é de 90 dias a partir do recebimento.
@@ -62,10 +62,25 @@ Você atende clientes por mensagem de texto, como no WhatsApp.
 """
 
 
+# Where the store resolved a contradiction in the manual, the model's copy is edited so the
+# losing text can't be quoted. knowledge/politicas.md itself stays verbatim (fidelity test).
+WITHHELD = "[contato interno, não informar ao cliente]"
+MANUAL_EDITS = {
+    # D28: only the §7 WhatsApp is a customer-service channel
+    "(67) 3341-4444": WITHHELD,
+    "contato@emporiodamusica.com.br": WITHHELD,
+    "contato@empóriodamusica.com.br": WITHHELD,
+    # D12/README §7 item 4: the §3.1 tiers prevail over the summary table
+    "Parcela mínima de R$ 100,00": "Parcela mínima conforme as faixas da seção 3.1",
+}
+
+
 @cache
 def static_prompt() -> str:
     # read_text() opens in text mode, which turns Windows CRLF into LF
     manual = (KNOWLEDGE_DIR / "politicas.md").read_text(encoding="utf-8")
+    for original, replacement in MANUAL_EDITS.items():
+        manual = manual.replace(original, replacement)
     return f"{INSTRUCTIONS}<manual>\n{manual.strip()}\n</manual>"
 
 
