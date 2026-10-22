@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.3] - 2026-10-22
+
+### Fixed
+- Found in Rael's manual testing: "As cordas nylon SN-7C vão entrar em promoção?"
+  - The agent sometimes declined "cordas nylon" as accessories without searching. The prompt
+    now requires a catalogue search before declining, because instrument names contain
+    "cordas" and "nylon".
+  - Search matched short query pieces across word boundaries ("sn" inside
+    "corda**s n**ylon"), so other violões hid the discontinued SN-7C. Pieces under 4
+    characters now match within a single word.
+  - New unit tests and the `nome_com_cordas` scenario: 141 tests, 25/25 scenarios.
+- Detail lost in the 1.0.1 README restructure was restored to `docs/technical-details.md`:
+  the assumptions in full, the AI-assistant write-up with links to the approved plans, local
+  proxy instructions, extra future ideas and the examples' timing note.
+
 ## [1.0.2] - 2026-10-22
 
 ### Changed

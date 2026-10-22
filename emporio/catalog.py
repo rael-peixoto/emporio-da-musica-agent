@@ -277,14 +277,23 @@ class Catalog:
         return order
 
 
+MIN_CROSS_WORD_TOKEN = 4
+
+
 def _matches(term: str, product: Product, fuzzy: bool) -> bool:
     text = " ".join([product.name, product.category.name, product.description or "",
                      *product.specs.values()])
     words = _words(text)
-    squashed = "".join(words)  # lets "GD-20" match "GD20"
+    squashed = "".join(words)  # lets "GD20" match "GD-20"
     for token in _words(term):
+        if any(token in word for word in words):
+            continue
+        # Only longer tokens may span word boundaries: a short one like "sn" would otherwise
+        # match inside "corda|s n|ylon" and hide the product actually asked for (SN-7C)
+        if len(token) >= MIN_CROSS_WORD_TOKEN and token in squashed:
+            continue
         # Synonyms match whole words only: "bass" must not match a "Basswood" body
-        if token in squashed or SEARCH_SYNONYMS.get(token) in words:
+        if SEARCH_SYNONYMS.get(token) in words:
             continue
         if fuzzy and difflib.get_close_matches(token, words, n=1, cutoff=0.8):
             continue

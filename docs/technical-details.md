@@ -12,6 +12,9 @@ WhatsApp integration design. The README is the short version.
 5. [Testing & evaluation](#5-testing--evaluation)
 6. [Example conversations](#6-example-conversations)
 7. [Real WhatsApp integration (design)](#7-real-whatsapp-integration-design)
+8. [Assumptions in full](#8-assumptions-in-full)
+9. [How the AI assistant was used, in detail](#9-how-the-ai-assistant-was-used-in-detail)
+10. [More ideas for the future](#10-more-ideas-for-the-future)
 
 ## 1. Things to try
 Run with `--debug` (terminal) or open the Console tab (web chat) to see each tool call, the
@@ -109,6 +112,14 @@ the free plan.
 Optional environment variables: `PROXY_DAILY_BUDGET_USD` (default 1.00),
 `PROXY_REQUESTS_PER_MINUTE` (default 30), `PROXY_MODEL`, `PROXY_EFFORT`.
 
+To run the proxy locally (for example, to test proxy mode):
+```
+set EMPORIO_ACCESS_CODE=<a-long-random-test-code>   # PowerShell: $env:EMPORIO_ACCESS_CODE="..."
+.venv\Scripts\python -m uvicorn --factory proxy.app:create_app --port 8765 --no-access-log
+```
+The proxy also needs `ANTHROPIC_API_KEY` in its environment. Then run the chat with
+`--mode proxy`, `PROXY_URL=http://127.0.0.1:8765` and the same code.
+
 ## 5. Testing & evaluation
 **Unit tests** (`.venv\Scripts\python -m pytest`, no model calls, free): expected values were
 worked out by hand from the CSV files and the manual, never copied from the code's output.
@@ -155,6 +166,14 @@ Scenarios:
   - An out-of-stock model reported as "not in the catalogue", now fixed in the tool.
   - The manual's summary table quoted instead of the §3.1 installment tiers (D28).
   - Basses named in English missed by Portuguese searches (D31).
+  - Found in Rael's manual testing: "As cordas nylon SN-7C vão entrar em promoção?" got two
+    failures.
+    - The model declined "cordas nylon" as accessories without searching. The prompt now
+      requires a catalogue search before declining.
+    - The search matched short query pieces across word boundaries ("sn" inside
+      "corda**s n**ylon"), so other violões hid the discontinued SN-7C. Short pieces now
+      match within a word only.
+    - New unit tests and the `nome_com_cordas` scenario (5/5).
 - **Model variance:** each fix was measured over repeated runs, and every reported result
   comes from a full run of the final code.
 
@@ -175,6 +194,10 @@ Every R$ amount in the replies was checked automatically against values derived 
 
 The five screenshots in [`docs/img/`](img/) are further real conversations from the web chat.
 
+Examples 1–3 and 5 use the real clock (21/10/2026). Example 4 simulates 20/02/2026, so the order
+is still inside its return window. The examples were recorded before decision D23, which only
+changes replies to non-Portuguese messages; all five conversations are in Portuguese.
+
 ## 7. Real WhatsApp integration (design)
 Not built (decision [D27](decision-log.md#d27)). The agent core doesn't depend on the
 interface, so this is a new entry point, not a rewrite:
@@ -189,3 +212,91 @@ interface, so this is a new entry point, not a rewrite:
    window, and log no message content.
 5. **Needs:** a Meta Business account, a verified number and webhook verification. Estimated
    at 2–4 hours, plus Meta's approval time.
+
+## 8. Assumptions in full
+The README lists these briefly. Each case has one explicit rule (decision
+[D12](decision-log.md#d12)); where a rule is ambiguous, it is read in the customer's favour
+(Brazil's Consumer Protection Code, CDC art. 47).
+1. **What can be sold:** a product is sellable only if its status is `active` **and** it has
+   stock.
+   - The Giannini GF-3D (id 96) is "temporarily unavailable".
+   - The Ibanez Bass 2X (id 136) is discontinued even though it shows stock.
+   - The Kala barítono (id 130) is "coming soon".
+2. **Contradictory product descriptions:** for products 135, 136, 137, 139, 140, 142 and 144,
+   the free-text description names another brand or contradicts the product's own specs (the
+   evidence table is in the README).
+   - Searching those descriptions could make the agent claim, for example, a Fender it doesn't
+     have, so they are withheld. Name, price, stock and specs are authoritative.
+   - Portuguese query words also match the English product names (D31).
+3. **Promotions:** only promotions marked active count. Promotions don't stack, and the 5% PIX
+   discount never applies on top of a promotional price.
+4. **Installments:** the detailed rules in §3.1 prevail over the summary table. Up to 3x, the
+   minimum installment is R$ 50 (the manual's wording, "sem valor mínimo… exceto abaixo de
+   R$ 50,00", is ambiguous); 4–6x, R$ 80; 7–12x, R$ 100. In the model's copy of the manual, the
+   summary table's "parcela mínima de R$ 100,00" points to §3.1.
+5. **Contact details:** the manual contradicts itself on the WhatsApp number.
+   - The cover and the company table (§1.2) list (67) 3341-4444 as "Telefone / WhatsApp".
+   - §7, the section about WhatsApp service, calls (67) 3321-4500 "o principal meio de
+     atendimento remoto".
+   - The numbers are too different to be a typo, so 3341-4444 is assumed to be a business line
+     for other purposes.
+   - The agent gives **only WhatsApp (67) 3321-4500**, and no e-mail, since the manual spells
+     the e-mail two ways and it may not be a service channel either (D28).
+   - Those contacts are masked in the model's copy of the manual. The store should confirm
+     before going live.
+6. **Shipping:** an order of exactly R$ 500 ships free. The manual says free "above R$ 500" and
+   charges a fee "below R$ 500", leaving R$ 500 itself undefined. Freight outside the Campo
+   Grande area depends on the postcode and isn't quoted.
+7. **Returns:**
+   - The receipt date is taken to be the estimated delivery date, the only date available.
+   - Orders in the data are treated as online purchases, so the 7-day right to cancel applies.
+   - Defective items are exchanged by the store within 30 days of purchase; after that, the
+     store helps with the manufacturer's warranty. The legal warranty is 90 days from receipt.
+8. **Order records are reported as they are:** the totals of orders 3 and 20 don't match their
+   items, and orders 9, 16 and 18 break the installment rules. The agent never "corrects" them.
+9. **Late orders:** if an order isn't delivered and its estimated delivery date has passed, the
+   agent apologises and offers a human.
+10. **Empty categories:** woodwinds, brass and orchestral strings have no products in the data.
+    The agent says nothing is available right now, rather than claiming the store doesn't sell
+    them.
+11. **Holidays:** the manual says the store closes on holidays but doesn't list them, so the
+    open/closed check ignores holidays.
+12. **Identity check:** order details require the order number plus the e-mail or phone of
+    that order's customer. One e-mail address is shared by customers 11 and 43, which weakens
+    the check for that address.
+
+## 9. How the AI assistant was used, in detail
+**Tool:** Claude Code (Anthropic's AI coding assistant, Opus 5.5) in VS Code, under the working
+agreement in [`CLAUDE.md`](../CLAUDE.md). Before that, Rael wrote his process plan in Notion
+(see the timeline in the README).
+- **Understand:** Claude Code read the briefing, the policy manual and every CSV. It listed
+  requirements, edge cases, security risks and every contradiction it found, separating facts
+  from assumptions.
+- **Research & plan:** in plan mode, where it can only read and propose, it researched options
+  and checked prices and model retirements on official pages. Rael chose the options. The
+  approved plans are [`implementation-plan.md`](implementation-plan.md),
+  [`implementation-plan-amendment-proxy.md`](implementation-plan-amendment-proxy.md) and
+  [`implementation-plan-web-ui.md`](implementation-plan-web-ui.md).
+- **Execute & test:** one stage at a time. After each stage, Claude Code reported the changes,
+  the real test output and the open issues.
+  - Rael approved the first commits one by one, then granted standing permission for stage
+    commits ([D18](decision-log.md#d18)).
+  - Every commit is gated on passing tests and an automatic scan for real secrets.
+- **Manual testing by Rael** changed the design several times: the WhatsApp number (D25, D28),
+  the language rule (D23), the web chat (D26), the search fixes (D31 and the SN-7C case), and
+  the seasonal-promotion idea (D29).
+- **Document:** decisions are recorded in the [decision log](decision-log.md) as they are made,
+  with who decided.
+
+**Who did what:** Claude Code did the reading, research, drafting and coding. Rael made every
+product and technical decision, reviewed the files, tested the agent, and controlled the
+budget, the credentials and the deployments.
+
+## 10. More ideas for the future
+Beyond the README's list:
+- Persist the proxy's counters (e.g. a small Redis instance) and give each reviewer their own
+  access code.
+- Track the evaluation pass rate over repeated runs, since model output varies, and run the
+  suite automatically on every change.
+- Record actual delivery dates, and add a stronger identity check, such as a one-time code
+  sent to the registered phone.

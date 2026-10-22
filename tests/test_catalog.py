@@ -94,6 +94,14 @@ def test_portuguese_terms_find_basses_named_in_english(catalog, term):
     assert ids(catalog.search(term=term)) == [138, 135, 137]
 
 
+@pytest.mark.parametrize("term", ["SN-7C 7 cordas nylon", "cordas nylon SN-7C", "Shelby SN-7C"])
+def test_model_code_is_not_matched_across_word_boundaries(catalog, term):
+    # "sn" used to match inside "corda|s n|ylon" and "7c" inside "7|c|ordas", so other 7-string
+    # violões looked like matches and the discontinued SN-7C (113) was never shown
+    assert ids(catalog.search(term=term)) == []
+    assert ids(catalog.search(term=term, only_sellable=False)) == [113]
+
+
 def test_electric_guitar_search_is_unchanged(catalog):
     assert sorted(ids(catalog.search(term="guitarra elétrica"))) == [131, 132, 133, 134, 145]
 

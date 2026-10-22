@@ -42,6 +42,10 @@ SCENARIOS = [
      "any_of": [["não faz mais parte", "descontinuado", "não trabalhamos mais"]]},
     {"id": "em_breve", "messages": ["O ukulele Kala KA-ABP-CTG Barítono Cedar já está à venda?"],
      "any_of": [["em breve", "ainda não"]]},
+    # "cordas nylon" here is part of an instrument's name, not strings (found in manual testing)
+    {"id": "nome_com_cordas", "messages": ["As cordas nylon SN-7C vão entrar em promoção?"],
+     "tools": ["buscar_produtos"], "contains": ["SN-7C"],
+     "any_of": [["não faz mais parte", "descontinuado"]]},
     {"id": "promocao_ativa", "messages": ["O Taylor 110e está com algum desconto?"],
      "contains": ["5.999,00", "8%", "5.519,08"]},
     {"id": "promocao_expirada",

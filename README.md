@@ -165,6 +165,8 @@ art. 47).
 11. **Holidays** aren't listed in the manual, so the open/closed check ignores them.
 12. **Identity:** order details need the order number plus that customer's e-mail or phone.
 
+The full wording of each assumption is in [technical details](docs/technical-details.md#8-assumptions-in-full).
+
 Evidence for item 2: each description contradicts the product's own data.
 
 | Product name | Its specs say | Its description says |
@@ -178,7 +180,7 @@ Evidence for item 2: each description contradicts the product's own data.
 | 144 Roland Synth 3 Pro | brand: Roland | "Teclado arranjador Yamaha" |
 
 ## 5. Testing
-- **Unit tests:** 138 tests that check the program's own logic, free and in seconds, with no
+- **Unit tests:** 141 tests that check the program's own logic, free and in seconds, with no
   AI involved. Examples:
   - the Takamine GD20 costs R$ 2.199,00;
   - PIX never stacks on a promotion;
@@ -186,9 +188,9 @@ Evidence for item 2: each description contradicts the product's own data.
   - no tool output ever contains a customer's e-mail or phone.
 
   Run them with `.venv\Scripts\python -m pytest`.
-- **Scenario evaluations,** like a mystery shopper: 24 typical customer messages go to the real
+- **Scenario evaluations,** like a mystery shopper: 25 typical customer messages go to the real
   model, and each answer is checked automatically. Examples: the right price, no other
-  customer's data, no discount that shouldn't exist. **24/24 pass**, at about US$0.01 per run.
+  customer's data, no discount that shouldn't exist. **25/25 pass**, at about US$0.01 per run.
   The [report](evals/results/claude-haiku-5-5.md) includes every conversation.
 - Every example and screenshot was also checked by hand against the data. The detail and the
   honest notes on how the suite evolved are in
@@ -239,7 +241,9 @@ agreement, [`CLAUDE.md`](CLAUDE.md): understand → research → plan → build 
 - **Approved plans** are kept in [`docs/`](docs/).
 - **Every commit was gated** on passing tests and an automatic secret scan.
 - **My own manual testing** changed the design several times: the contact channel, the
-  language rule, the web chat and the search fix.
+  language rule, the web chat and the search fixes.
+- **The full write-up,** phase by phase with links to each approved plan, is in
+  [technical details](docs/technical-details.md#9-how-the-ai-assistant-was-used-in-detail).
 
 ![Process timeline](docs/img/timeline.png)
 
