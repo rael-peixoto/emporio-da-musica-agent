@@ -14,7 +14,9 @@ type; the commit history shows the step-by-step order.
   command.
 - README "Tech stack at a glance" table: each technology, what it does, and why it was chosen
   over the alternatives.
-- Screenshot of a harder conversation (gift recommendation and a promotion question).
+- Screenshot of a harder conversation (gift recommendation and a promotion question), plus two
+  more: privacy and honesty (refusing another customer's contact data; an honest "not found"),
+  and maths with no invented facts (instalments on a promotion; no made-up warranty period).
 - Evaluation scenario `contatos`; the suite is 23/23 (US$0.0106). 134 unit tests.
 - Decision log D28 and D29, plus an observation added to D11 (follow-ups use the session
   memory).

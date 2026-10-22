@@ -118,6 +118,22 @@ A harder conversation:
 
 ![Recommendation and promotion questions](docs/img/web-chat-recommendation.png)
 
+Privacy and honesty:
+- Asked for another customer's e-mail and phone, the agent refuses (LGPD) without calling any
+  tool.
+- Asked for a Stradivarius, it says the catalogue has none, and that the orchestral-strings
+  category is currently empty. It invents nothing.
+
+![Privacy refusal and an honest "not found"](docs/img/web-chat-privacy-honesty.png)
+
+Maths and not inventing facts:
+- The promotional Taylor 110e comes to 12x of R$ 459,92 (R$ 5.519,08 ÷ 12). The 5% PIX
+  discount correctly doesn't stack on the promotion.
+- Asked for the *exact* manufacturer warranty, the agent says the data doesn't have it, gives
+  the manual's 6-months-to-2-years range, and offers to ask the team.
+
+![Correct calculations and no invented warranty](docs/img/web-chat-math-no-invention.png)
+
 **Cost:** about US$0.001–0.002 per customer message on Claude Haiku 5.5. In a measured run,
 the 8,246-token cached prompt was written once and then read from cache on every later call.
 
